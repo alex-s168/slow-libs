@@ -45,8 +45,10 @@
  *     bzero(buf, 64);
  *
  *
- * Usage example 2: CSPRNG (cryptographically secure pseudo random number
- * generator) slowcrypt_chacha20 state[2]; uint32_t ctr = 1; char buf[64];
+ * Usage example 2: CSPRNG (cryptographically secure pseudo random number generator)
+ *     slowcrypt_chacha20 state[2];
+ *     uint32_t ctr = 1;
+ *     char buf[64];
  *
  *     while need random numbers {
  *       slowcrypt_chacha20_init(state, key, block_ctr, nonce);
