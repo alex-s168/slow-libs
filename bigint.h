@@ -1,28 +1,17 @@
 /* SPDX-License-Identifier: 0BSD */
 /* Copyright (c) 2023 John Regan <john@jrjrtech.com> */
 /* Full license details available at end of file. */
-#ifndef BIGINTH
-#define BIGINTH
+/* Original source: https://github.com/jprjr/bigint.git 
+ * Commit: 26f0d7b27
+ * With modifications
+ *
+ * See git history of this repo
+ */
+#ifndef BIGINT_H
+#define BIGINT_H
 
-#if !defined(BIGINT_API)
-    #ifdef _WIN32
-        #define BIGINT_DLL_IMPORT  __declspec(dllimport)
-        #define BIGINT_DLL_EXPORT  __declspec(dllexport)
-    #else
-        #if defined(__GNUC__) && __GNUC__ >= 4
-            #define BIGINT_DLL_IMPORT  __attribute__((visibility("default")))
-            #define BIGINT_DLL_EXPORT  __attribute__((visibility("default")))
-        #else
-            #define BIGINT_DLL_IMPORT
-            #define BIGINT_DLL_EXPORT
-        #endif
-    #endif
-
-    #ifdef BIGINT_IMPLEMENTATION
-        #define BIGINT_API  BIGINT_DLL_EXPORT
-    #else
-        #define BIGINT_API  BIGINT_DLL_IMPORT
-    #endif
+#ifndef BIGINT_FUNC
+#define BIGINT_FUNC /**/
 #endif
 
 #ifdef __cplusplus
@@ -70,7 +59,7 @@ extern "C" {
 #elif BIGINT_WORD_WIDTH == 8
 #define BIGINT_WORD_TYPE uint64_t
 #else
-#error unknown_type
+error unknown_type;
 #endif
 #endif
 
@@ -112,80 +101,80 @@ typedef struct bigint {
 #endif
 extern const bigint* BIGINT_ZERO;
 
-BIGINT_API
+BIGINT_FUNC
 void bigint_init(bigint* b);
 
-BIGINT_API
+BIGINT_FUNC
 void bigint_free(bigint* b);
 
-BIGINT_API
+BIGINT_FUNC
 int bigint_copy(bigint* b, const bigint* a);
 
-BIGINT_API
+BIGINT_FUNC
 int bigint_from_word(bigint* b, bigint_word val);
 
-BIGINT_API
+BIGINT_FUNC
 int bigint_from_string(bigint* b, const char* str, size_t len, unsigned int base);
 
 /* convenience function for NULL-terminated strings */
-BIGINT_API
+BIGINT_FUNC
 int bigint_from_cstring(bigint* b, const char* str, unsigned int base);
 
-BIGINT_API
+BIGINT_FUNC
 int bigint_from_u8(bigint* b, uint8_t val);
 
-BIGINT_API
+BIGINT_FUNC
 int bigint_from_i8(bigint* b, int8_t val);
 
-BIGINT_API
+BIGINT_FUNC
 int bigint_from_u16(bigint* b, uint16_t val);
 
-BIGINT_API
+BIGINT_FUNC
 int bigint_from_i16(bigint* b, int16_t val);
 
-BIGINT_API
+BIGINT_FUNC
 int bigint_from_u32(bigint* b, uint32_t val);
 
-BIGINT_API
+BIGINT_FUNC
 int bigint_from_i32(bigint* b, int32_t val);
 
-BIGINT_API
+BIGINT_FUNC
 int bigint_from_u64(bigint* b, uint64_t val);
 
-BIGINT_API
+BIGINT_FUNC
 int bigint_from_i64(bigint* b, int64_t val);
 
 /* bigint_to functions return 0 on success, 1 if the
  * bigint won't fit into the type */
 
-BIGINT_API
+BIGINT_FUNC
 int bigint_to_u8(uint8_t *val, const bigint* b);
 
-BIGINT_API
+BIGINT_FUNC
 int bigint_to_i8(int8_t *val, const bigint* b);
 
-BIGINT_API
+BIGINT_FUNC
 int bigint_to_u16(uint16_t * val, const bigint* b);
 
-BIGINT_API
+BIGINT_FUNC
 int bigint_to_i16(int16_t * val, const bigint* b);
 
-BIGINT_API
+BIGINT_FUNC
 int bigint_to_u32(uint32_t * val, const bigint* b);
 
-BIGINT_API
+BIGINT_FUNC
 int bigint_to_i32(int32_t * val, const bigint* b);
 
-BIGINT_API
+BIGINT_FUNC
 int bigint_to_u64(uint64_t * val, const bigint* b);
 
-BIGINT_API
+BIGINT_FUNC
 int bigint_to_i64(int64_t * val, const bigint* b);
 
-BIGINT_API
+BIGINT_FUNC
 size_t bigint_to_string(char* str, size_t len, const bigint* b, unsigned int base);
 
-BIGINT_API
+BIGINT_FUNC
 int bigint_cmp(const bigint *a, const bigint *b);
 
 #define bigint_lt(a,b) (bigint_cmp((a),(b)) == -1)
@@ -194,41 +183,41 @@ int bigint_cmp(const bigint *a, const bigint *b);
 #define bigint_le(a,b) (bigint_cmp((a),(b)) !=  1)
 #define bigint_ge(a,b) (bigint_cmp((a),(b)) != -1)
 
-BIGINT_API
+BIGINT_FUNC
 int bigint_inc(bigint* c, const bigint *a);
 
-BIGINT_API
+BIGINT_FUNC
 int bigint_dec(bigint* c, const bigint *b);
 
-BIGINT_API
+BIGINT_FUNC
 int bigint_add(bigint* c, const bigint* a, const bigint* b);
 
-BIGINT_API
+BIGINT_FUNC
 int bigint_sub(bigint* c, const bigint* a, const bigint* b);
 
-BIGINT_API
+BIGINT_FUNC
 int bigint_mul(bigint* c, const bigint* a, const bigint* b);
 
-BIGINT_API
+BIGINT_FUNC
 int bigint_div_mod(bigint* quotient, bigint* remainder, const bigint* numerator, const bigint* denominator);
 
-BIGINT_API
+BIGINT_FUNC
 int bigint_lshift(bigint* c, const bigint* a, size_t bits);
 
-BIGINT_API
+BIGINT_FUNC
 int bigint_rshift(bigint* c, const bigint* a, size_t bits);
 
-BIGINT_API
+BIGINT_FUNC
 int bigint_lshift_overwrite(bigint* a, size_t bits);
 
-BIGINT_API
+BIGINT_FUNC
 int bigint_rshift_overwrite(bigint* a, size_t bits);
 
 /* faster div_mod for when you're dividing by a regular, positive word type - note that this
  * overwrites numerator! roughly equivalent to:
  * remainder = numerator % denominator
  * numerator /= denominator */
-BIGINT_API
+BIGINT_FUNC
 void bigint_div_mod_word(bigint* numerator, bigint_word* remainder, bigint_word denominator);
 
 
@@ -694,7 +683,7 @@ int bigint_cmp_abs(const bigint* a, const bigint* b) {
     return 0;
 }
 
-BIGINT_API
+BIGINT_FUNC
 int bigint_lshift_overwrite(bigint* c, size_t bits) {
     int r;
     size_t words, expanded, i;
@@ -733,7 +722,7 @@ int bigint_lshift_overwrite(bigint* c, size_t bits) {
     return 0;
 }
 
-BIGINT_API
+BIGINT_FUNC
 int bigint_lshift(bigint* c, const bigint* a, size_t bits) {
     int r;
 
@@ -742,7 +731,7 @@ int bigint_lshift(bigint* c, const bigint* a, size_t bits) {
 }
 
 
-BIGINT_API
+BIGINT_FUNC
 int bigint_rshift_overwrite(bigint* c, size_t bits) {
     int r;
     size_t words, i;
@@ -798,7 +787,7 @@ BIGINT_RSHIFT_OVERWRITE_SMALL(4)
 BIGINT_RSHIFT_OVERWRITE_SMALL(3)
 BIGINT_RSHIFT_OVERWRITE_SMALL(1)
 
-BIGINT_API
+BIGINT_FUNC
 int bigint_rshift(bigint* c, const bigint* a, size_t bits) {
     int r;
     if( (r = bigint_copy(c,a)) != 0) return r;
@@ -1060,7 +1049,7 @@ static int bigint_from_string_base0(bigint* b, const char* str, size_t len) {
  *  0x1234 (base16)
  */
 
-BIGINT_API
+BIGINT_FUNC
 int bigint_from_string(bigint* b, const char* str, size_t len, unsigned int base) {
     int r = 0;
     size_t sign = 0;
@@ -1114,18 +1103,18 @@ int bigint_from_string(bigint* b, const char* str, size_t len, unsigned int base
     return r;
 }
 
-BIGINT_API
+BIGINT_FUNC
 int bigint_from_cstring(bigint* b, const char* str, unsigned int base) {
     return bigint_from_string(b,str,strlen(str),base);
 }
 
-BIGINT_API
+BIGINT_FUNC
 void bigint_init(bigint* b) {
     *b = *BIGINT_ZERO;
     b->limit = BIGINT_DEFAULT_LIMIT;
 }
 
-BIGINT_API
+BIGINT_FUNC
 void bigint_free(bigint* b) {
     bigint_reset(b);
 #ifndef BIGINT_NO_MALLOC
@@ -1137,7 +1126,7 @@ void bigint_free(bigint* b) {
 #endif
 }
 
-BIGINT_API
+BIGINT_FUNC
 int bigint_copy(bigint *dest, const bigint *src) {
     int r;
     size_t limit;
@@ -1164,21 +1153,21 @@ int bigint_copy(bigint *dest, const bigint *src) {
     return 0;
 }
 
-BIGINT_API
+BIGINT_FUNC
 int bigint_from_word(bigint* b, bigint_word val) {
     bigint_reset(b);
     if(!val) return 0;
     return bigint_append(b,val);
 }
 
-BIGINT_API
+BIGINT_FUNC
 int bigint_from_u8(bigint* b, uint8_t val) {
     bigint_reset(b);
     if(!val) return 0;
     return bigint_append(b, (bigint_word)(val & BIGINT_WORD_MASK) );
 }
 
-BIGINT_API
+BIGINT_FUNC
 int bigint_from_u16(bigint* b, uint16_t val) {
     int r;
     bigint_reset(b);
@@ -1195,7 +1184,7 @@ int bigint_from_u16(bigint* b, uint16_t val) {
     return r;
 }
 
-BIGINT_API
+BIGINT_FUNC
 int bigint_from_u32(bigint* b, uint32_t val) {
     int r;
     bigint_reset(b);
@@ -1212,7 +1201,7 @@ int bigint_from_u32(bigint* b, uint32_t val) {
     return r;
 }
 
-BIGINT_API
+BIGINT_FUNC
 int bigint_from_u64(bigint* b, uint64_t val) {
     int r;
     bigint_reset(b);
@@ -1229,7 +1218,7 @@ int bigint_from_u64(bigint* b, uint64_t val) {
     return r;
 }
 
-BIGINT_API
+BIGINT_FUNC
 int bigint_from_i8(bigint* b, int8_t val) {
     int r;
     uint8_t uval = val < 0 ? -val : val;
@@ -1240,7 +1229,7 @@ int bigint_from_i8(bigint* b, int8_t val) {
     return 0;
 }
 
-BIGINT_API
+BIGINT_FUNC
 int bigint_from_i16(bigint* b, int16_t val) {
     int r;
     uint16_t uval = val < 0 ? -val : val;
@@ -1251,7 +1240,7 @@ int bigint_from_i16(bigint* b, int16_t val) {
     return 0;
 }
 
-BIGINT_API
+BIGINT_FUNC
 int bigint_from_i32(bigint* b, int32_t val) {
     int r;
     uint32_t uval = val < 0 ? -val : val;
@@ -1262,7 +1251,7 @@ int bigint_from_i32(bigint* b, int32_t val) {
     return 0;
 }
 
-BIGINT_API
+BIGINT_FUNC
 int bigint_from_i64(bigint* b, int64_t val) {
     int r;
     uint64_t uval = val < 0 ? -val : val;
@@ -1290,7 +1279,7 @@ uint64_t bigint_to_u64_internal(const bigint* b) {
     return tmp;
 }
 
-BIGINT_API
+BIGINT_FUNC
 int bigint_to_u8(uint8_t *val, const bigint* b) {
     uint64_t tmp = 0;
 
@@ -1302,7 +1291,7 @@ int bigint_to_u8(uint8_t *val, const bigint* b) {
     return 0;
 }
 
-BIGINT_API
+BIGINT_FUNC
 int bigint_to_i8(int8_t *val, const bigint* b) {
     uint8_t tmp = 0;
     uint8_t max = INT8_MAX;
@@ -1316,7 +1305,7 @@ int bigint_to_i8(int8_t *val, const bigint* b) {
     return 0;
 }
 
-BIGINT_API
+BIGINT_FUNC
 int bigint_to_u16(uint16_t *val, const bigint* b) {
     uint64_t tmp = 0;
 
@@ -1328,7 +1317,7 @@ int bigint_to_u16(uint16_t *val, const bigint* b) {
     return 0;
 }
 
-BIGINT_API
+BIGINT_FUNC
 int bigint_to_i16(int16_t *val, const bigint* b) {
     uint16_t tmp = 0;
     uint16_t max = INT16_MAX;
@@ -1342,7 +1331,7 @@ int bigint_to_i16(int16_t *val, const bigint* b) {
     return 0;
 }
 
-BIGINT_API
+BIGINT_FUNC
 int bigint_to_u32(uint32_t *val, const bigint* b) {
     uint64_t tmp = 0;
 
@@ -1354,7 +1343,7 @@ int bigint_to_u32(uint32_t *val, const bigint* b) {
     return 0;
 }
 
-BIGINT_API
+BIGINT_FUNC
 int bigint_to_i32(int32_t *val, const bigint* b) {
     uint32_t tmp = 0;
     uint32_t max = INT32_MAX;
@@ -1368,7 +1357,7 @@ int bigint_to_i32(int32_t *val, const bigint* b) {
     return 0;
 }
 
-BIGINT_API
+BIGINT_FUNC
 int bigint_to_u64(uint64_t *val, const bigint* b) {
     uint64_t tmp = 0;
 
@@ -1380,7 +1369,7 @@ int bigint_to_u64(uint64_t *val, const bigint* b) {
     return 0;
 }
 
-BIGINT_API
+BIGINT_FUNC
 int bigint_to_i64(int64_t *val, const bigint* b) {
     uint64_t tmp = 0;
     uint64_t max = INT64_MAX;
@@ -1429,7 +1418,7 @@ int bigint_add_signed(bigint* c, const bigint* a, size_t a_sign, const bigint* b
     return 0;
 }
 
-BIGINT_API
+BIGINT_FUNC
 int bigint_add(bigint* c, const bigint* a, const bigint* b) {
     int r;
     bigint tmp = BIGINT_INIT;
@@ -1443,7 +1432,7 @@ int bigint_add(bigint* c, const bigint* a, const bigint* b) {
     return r;
 }
 
-BIGINT_API
+BIGINT_FUNC
 int bigint_sub(bigint* c, const bigint* a, const bigint* b) {
     int r;
     bigint tmp = BIGINT_INIT;
@@ -1457,7 +1446,7 @@ int bigint_sub(bigint* c, const bigint* a, const bigint* b) {
     return r;
 }
 
-BIGINT_API
+BIGINT_FUNC
 int bigint_mul(bigint* c, const bigint* a, const bigint* b) {
     int r;
     bigint tmp = BIGINT_INIT;
@@ -1471,7 +1460,7 @@ int bigint_mul(bigint* c, const bigint* a, const bigint* b) {
     return r;
 }
 
-BIGINT_API
+BIGINT_FUNC
 void bigint_div_mod_word(bigint* numerator, bigint_word* remainder, bigint_word denominator) {
     size_t i;
     size_t j;
@@ -1547,7 +1536,7 @@ void bigint_div_mod_ ## x (bigint* numerator, bigint_word* remainder) { \
 
 BIGINT_DIV_MOD_WORD(10)
 
-BIGINT_API
+BIGINT_FUNC
 int bigint_div_mod(bigint* quotient, bigint* remainder, const bigint* numerator, const bigint* denominator) {
     int r;
     size_t n;
@@ -1593,12 +1582,12 @@ static const bigint BIGINT_ONE_STORAGE = { .words = (bigint_word*)&BIGINT_ONE_VA
 #endif
 static const bigint* BIGINT_ONE = &BIGINT_ONE_STORAGE;
 
-BIGINT_API
+BIGINT_FUNC
 int bigint_inc(bigint* c, const bigint *a) {
     return bigint_add(c, a, BIGINT_ONE);
 }
 
-BIGINT_API
+BIGINT_FUNC
 int bigint_dec(bigint* c, const bigint *a) {
     return bigint_sub(c, a, BIGINT_ONE);
 }
@@ -1725,7 +1714,7 @@ static size_t bigint_to_string_base2(char* str, size_t len, bigint* b) {
     return len;
 }
 
-BIGINT_API
+BIGINT_FUNC
 size_t bigint_to_string(char* str, size_t len, const bigint* b, unsigned int base) {
     bigint tmp = BIGINT_INIT;
     int r;
@@ -1798,7 +1787,7 @@ size_t bigint_to_string(char* str, size_t len, const bigint* b, unsigned int bas
     return res;
 }
 
-BIGINT_API
+BIGINT_FUNC
 int bigint_cmp(const bigint *a, const bigint *b) {
     if(!a->size && !b->size) return 0;
     if(a->sign && b->sign) return bigint_cmp_abs(b,a);
