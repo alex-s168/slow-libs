@@ -10,7 +10,7 @@
 /*
  * "Special" use case: using this in another single header library:
  * #define BIGINT_FUNC MYTHING_FUNC
- * #define BIGINT_NAMESPACE mything_bigint
+ * #define BIGINT_NAMESPACE(x) mything_bigint_##x
  * #define BIGINT_UNDEF
  * #define BIGINT_NO_MALLOC
  * #include "bigint.h"
@@ -21,6 +21,10 @@
 
 #ifndef BIGINT_FUNC
 #define BIGINT_FUNC /**/
+#endif
+
+#ifndef BIGINT_NAMESPACE
+#define BIGINT_NAMESPACE(x) bigint_##x
 #endif
 
 #ifdef __cplusplus
@@ -118,134 +122,136 @@ typedef struct bigint
 extern const bigint* BIGINT_ZERO;
 
 BIGINT_FUNC
-void bigint_init(bigint* b);
+void BIGINT_NAMESPACE(init)(bigint* b);
 
 BIGINT_FUNC
-void bigint_free(bigint* b);
+void BIGINT_NAMESPACE(free)(bigint* b);
 
 BIGINT_FUNC
-int bigint_copy(bigint* b, const bigint* a);
+int BIGINT_NAMESPACE(copy)(bigint* b, const bigint* a);
 
 BIGINT_FUNC
-int bigint_from_word(bigint* b, bigint_word val);
+int BIGINT_NAMESPACE(from_word)(bigint* b, bigint_word val);
 
 BIGINT_FUNC
-int bigint_from_string(bigint* b,
-                       const char* str,
-                       size_t len,
-                       unsigned int base);
+int BIGINT_NAMESPACE(from_string)(bigint* b,
+                                  const char* str,
+                                  size_t len,
+                                  unsigned int base);
 
 /* convenience function for NULL-terminated strings */
 BIGINT_FUNC
-int bigint_from_cstring(bigint* b, const char* str, unsigned int base);
+int BIGINT_NAMESPACE(from_cstring)(bigint* b,
+                                   const char* str,
+                                   unsigned int base);
 
 BIGINT_FUNC
-int bigint_from_u8(bigint* b, uint8_t val);
+int BIGINT_NAMESPACE(from_u8)(bigint* b, uint8_t val);
 
 BIGINT_FUNC
-int bigint_from_i8(bigint* b, int8_t val);
+int BIGINT_NAMESPACE(from_i8)(bigint* b, int8_t val);
 
 BIGINT_FUNC
-int bigint_from_u16(bigint* b, uint16_t val);
+int BIGINT_NAMESPACE(from_u16)(bigint* b, uint16_t val);
 
 BIGINT_FUNC
-int bigint_from_i16(bigint* b, int16_t val);
+int BIGINT_NAMESPACE(from_i16)(bigint* b, int16_t val);
 
 BIGINT_FUNC
-int bigint_from_u32(bigint* b, uint32_t val);
+int BIGINT_NAMESPACE(from_u32)(bigint* b, uint32_t val);
 
 BIGINT_FUNC
-int bigint_from_i32(bigint* b, int32_t val);
+int BIGINT_NAMESPACE(from_i32)(bigint* b, int32_t val);
 
 BIGINT_FUNC
-int bigint_from_u64(bigint* b, uint64_t val);
+int BIGINT_NAMESPACE(from_u64)(bigint* b, uint64_t val);
 
 BIGINT_FUNC
-int bigint_from_i64(bigint* b, int64_t val);
+int BIGINT_NAMESPACE(from_i64)(bigint* b, int64_t val);
 
 /* bigint_to functions return 0 on success, 1 if the
  * bigint won't fit into the type */
 
 BIGINT_FUNC
-int bigint_to_u8(uint8_t* val, const bigint* b);
+int BIGINT_NAMESPACE(to_u8)(uint8_t* val, const bigint* b);
 
 BIGINT_FUNC
-int bigint_to_i8(int8_t* val, const bigint* b);
+int BIGINT_NAMESPACE(to_i8)(int8_t* val, const bigint* b);
 
 BIGINT_FUNC
-int bigint_to_u16(uint16_t* val, const bigint* b);
+int BIGINT_NAMESPACE(to_u16)(uint16_t* val, const bigint* b);
 
 BIGINT_FUNC
-int bigint_to_i16(int16_t* val, const bigint* b);
+int BIGINT_NAMESPACE(to_i16)(int16_t* val, const bigint* b);
 
 BIGINT_FUNC
-int bigint_to_u32(uint32_t* val, const bigint* b);
+int BIGINT_NAMESPACE(to_u32)(uint32_t* val, const bigint* b);
 
 BIGINT_FUNC
-int bigint_to_i32(int32_t* val, const bigint* b);
+int BIGINT_NAMESPACE(to_i32)(int32_t* val, const bigint* b);
 
 BIGINT_FUNC
-int bigint_to_u64(uint64_t* val, const bigint* b);
+int BIGINT_NAMESPACE(to_u64)(uint64_t* val, const bigint* b);
 
 BIGINT_FUNC
-int bigint_to_i64(int64_t* val, const bigint* b);
+int BIGINT_NAMESPACE(to_i64)(int64_t* val, const bigint* b);
 
 BIGINT_FUNC
-size_t bigint_to_string(char* str,
-                        size_t len,
-                        const bigint* b,
-                        unsigned int base);
+size_t BIGINT_NAMESPACE(to_string)(char* str,
+                                   size_t len,
+                                   const bigint* b,
+                                   unsigned int base);
 
 BIGINT_FUNC
-int bigint_cmp(const bigint* a, const bigint* b);
+int BIGINT_NAMESPACE(cmp)(const bigint* a, const bigint* b);
 
-#define bigint_lt(a, b) (bigint_cmp((a), (b)) == -1)
-#define bigint_gt(a, b) (bigint_cmp((a), (b)) == 1)
-#define bigint_eq(a, b) (bigint_cmp((a), (b)) == 0)
-#define bigint_le(a, b) (bigint_cmp((a), (b)) != 1)
-#define bigint_ge(a, b) (bigint_cmp((a), (b)) != -1)
-
-BIGINT_FUNC
-int bigint_inc(bigint* c, const bigint* a);
+#define bigint_lt (a, b)(bigint_cmp((a), (b)) == -1)
+#define bigint_gt (a, b)(bigint_cmp((a), (b)) == 1)
+#define bigint_eq (a, b)(bigint_cmp((a), (b)) == 0)
+#define bigint_le (a, b)(bigint_cmp((a), (b)) != 1)
+#define bigint_ge (a, b)(bigint_cmp((a), (b)) != -1)
 
 BIGINT_FUNC
-int bigint_dec(bigint* c, const bigint* b);
+int BIGINT_NAMESPACE(inc)(bigint* c, const bigint* a);
 
 BIGINT_FUNC
-int bigint_add(bigint* c, const bigint* a, const bigint* b);
+int BIGINT_NAMESPACE(dec)(bigint* c, const bigint* b);
 
 BIGINT_FUNC
-int bigint_sub(bigint* c, const bigint* a, const bigint* b);
+int BIGINT_NAMESPACE(add)(bigint* c, const bigint* a, const bigint* b);
 
 BIGINT_FUNC
-int bigint_mul(bigint* c, const bigint* a, const bigint* b);
+int BIGINT_NAMESPACE(sub)(bigint* c, const bigint* a, const bigint* b);
 
 BIGINT_FUNC
-int bigint_div_mod(bigint* quotient,
-                   bigint* remainder,
-                   const bigint* numerator,
-                   const bigint* denominator);
+int BIGINT_NAMESPACE(mul)(bigint* c, const bigint* a, const bigint* b);
 
 BIGINT_FUNC
-int bigint_lshift(bigint* c, const bigint* a, size_t bits);
+int BIGINT_NAMESPACE(div_mod)(bigint* quotient,
+                              bigint* remainder,
+                              const bigint* numerator,
+                              const bigint* denominator);
 
 BIGINT_FUNC
-int bigint_rshift(bigint* c, const bigint* a, size_t bits);
+int BIGINT_NAMESPACE(lshift)(bigint* c, const bigint* a, size_t bits);
 
 BIGINT_FUNC
-int bigint_lshift_overwrite(bigint* a, size_t bits);
+int BIGINT_NAMESPACE(rshift)(bigint* c, const bigint* a, size_t bits);
 
 BIGINT_FUNC
-int bigint_rshift_overwrite(bigint* a, size_t bits);
+int BIGINT_NAMESPACE(lshift_overwrite)(bigint* a, size_t bits);
+
+BIGINT_FUNC
+int BIGINT_NAMESPACE(rshift_overwrite)(bigint* a, size_t bits);
 
 /* faster div_mod for when you're dividing by a regular, positive word type - note that this
  * overwrites numerator! roughly equivalent to:
  * remainder = numerator % denominator
  * numerator /= denominator */
 BIGINT_FUNC
-void bigint_div_mod_word(bigint* numerator,
-                         bigint_word* remainder,
-                         bigint_word denominator);
+void BIGINT_NAMESPACE(div_mod_word)(bigint* numerator,
+                                    bigint_word* remainder,
+                                    bigint_word denominator);
 
 #ifdef __cplusplus
 }
@@ -325,56 +331,76 @@ static const bigint BIGINT_ZERO_STORAGE = {.words = NULL,
 #endif
 const bigint* BIGINT_ZERO = &BIGINT_ZERO_STORAGE;
 
-static void bigint_reset(bigint* b);
-static int bigint_resize(bigint* b, size_t size);
-static inline void bigint_truncate(bigint* b);
-static int bigint_append(bigint* b, bigint_word val);
+static void BIGINT_NAMESPACE(reset)(bigint* b);
+static int BIGINT_NAMESPACE(resize)(bigint* b, size_t size);
+static inline void BIGINT_NAMESPACE(truncate)(bigint* b);
+static int BIGINT_NAMESPACE(append)(bigint* b, bigint_word val);
 
-static int bigint_add_word(bigint* b, bigint_word val);
+static int BIGINT_NAMESPACE(add_word)(bigint* b, bigint_word val);
 
-static inline size_t bigint_word_bitlength(bigint_word a);
-static int bigint_word_add(bigint_word* a, bigint_word b);
-static int bigint_word_sub(bigint_word* a, bigint_word b);
-static bigint_word bigint_word_mul(bigint_word* a, bigint_word b);
+static inline size_t BIGINT_NAMESPACE(word_bitlength)(bigint_word a);
+static int BIGINT_NAMESPACE(word_add)(bigint_word* a, bigint_word b);
+static int BIGINT_NAMESPACE(word_sub)(bigint_word* a, bigint_word b);
+static bigint_word BIGINT_NAMESPACE(word_mul)(bigint_word* a, bigint_word b);
 
-static int bigint_add_unsigned(bigint* a, const bigint* b);
-static int bigint_sub_unsigned(bigint* a, const bigint* b);
+static int BIGINT_NAMESPACE(add_unsigned)(bigint* a, const bigint* b);
+static int BIGINT_NAMESPACE(sub_unsigned)(bigint* a, const bigint* b);
 
-static int bigint_add_signed(bigint* c,
-                             const bigint* a,
-                             size_t a_sign,
-                             const bigint* b,
-                             size_t b_sign);
+static int BIGINT_NAMESPACE(add_signed)(bigint* c,
+                                        const bigint* a,
+                                        size_t a_sign,
+                                        const bigint* b,
+                                        size_t b_sign);
 
-static int bigint_cmp_abs(const bigint* a, const bigint* b);
+static int BIGINT_NAMESPACE(cmp_abs)(const bigint* a, const bigint* b);
 
-static int bigint_mul_long(bigint* c, const bigint* a, const bigint* b);
+static int BIGINT_NAMESPACE(mul_long)(bigint* c,
+                                      const bigint* a,
+                                      const bigint* b);
 
-static size_t bigint_bitlength(const bigint* a);
-static int bigint_get_bit(const bigint* a, size_t b);
-static int bigint_set_bit(bigint* a, size_t b, uint8_t val);
-static int bigint_from_string_base16(bigint* b, const char* str, size_t len);
-static int bigint_from_string_base10(bigint* b, const char* str, size_t len);
-static int bigint_from_string_base8(bigint* b, const char* str, size_t len);
-static int bigint_from_string_base2(bigint* b, const char* str, size_t len);
-static int bigint_from_string_base0(bigint* b, const char* str, size_t len);
+static size_t BIGINT_NAMESPACE(bitlength)(const bigint* a);
+static int BIGINT_NAMESPACE(get_bit)(const bigint* a, size_t b);
+static int BIGINT_NAMESPACE(set_bit)(bigint* a, size_t b, uint8_t val);
+static int BIGINT_NAMESPACE(from_string_base16)(bigint* b,
+                                                const char* str,
+                                                size_t len);
+static int BIGINT_NAMESPACE(from_string_base10)(bigint* b,
+                                                const char* str,
+                                                size_t len);
+static int BIGINT_NAMESPACE(from_string_base8)(bigint* b,
+                                               const char* str,
+                                               size_t len);
+static int BIGINT_NAMESPACE(from_string_base2)(bigint* b,
+                                               const char* str,
+                                               size_t len);
+static int BIGINT_NAMESPACE(from_string_base0)(bigint* b,
+                                               const char* str,
+                                               size_t len);
 
 /* returns the length of a string for the given base */
-static size_t bigint_len_string_base16(const bigint* b);
-static size_t bigint_len_string_base10(const bigint* b);
-static size_t bigint_len_string_base8(const bigint* b);
-static size_t bigint_len_string_base2(const bigint* b);
+static size_t BIGINT_NAMESPACE(len_string_base16)(const bigint* b);
+static size_t BIGINT_NAMESPACE(len_string_base10)(const bigint* b);
+static size_t BIGINT_NAMESPACE(len_string_base8)(const bigint* b);
+static size_t BIGINT_NAMESPACE(len_string_base2)(const bigint* b);
 
 BIGINT_NONNULL1
-static size_t bigint_to_string_base16(char* str, size_t len, bigint* b);
+static size_t BIGINT_NAMESPACE(to_string_base16)(char* str,
+                                                 size_t len,
+                                                 bigint* b);
 BIGINT_NONNULL1
-static size_t bigint_to_string_base10(char* str, size_t len, bigint* b);
+static size_t BIGINT_NAMESPACE(to_string_base10)(char* str,
+                                                 size_t len,
+                                                 bigint* b);
 BIGINT_NONNULL1
-static size_t bigint_to_string_base8(char* str, size_t len, bigint* b);
+static size_t BIGINT_NAMESPACE(to_string_base8)(char* str,
+                                                size_t len,
+                                                bigint* b);
 BIGINT_NONNULL1
-static size_t bigint_to_string_base2(char* str, size_t len, bigint* b);
+static size_t BIGINT_NAMESPACE(to_string_base2)(char* str,
+                                                size_t len,
+                                                bigint* b);
 
-static void bigint_reset(bigint* b)
+static void BIGINT_NAMESPACE(reset)(bigint* b)
 {
   b->size = 0;
   b->sign = 0;
@@ -384,7 +410,7 @@ static void bigint_reset(bigint* b)
     b->words[0] = 0;
 }
 
-static int bigint_resize(bigint* b, size_t size)
+static int BIGINT_NAMESPACE(resize)(bigint* b, size_t size)
 {
 #ifdef BIGINT_NO_MALLOC
   size_t alloc = size;
@@ -421,14 +447,14 @@ static int bigint_resize(bigint* b, size_t size)
   return 0;
 }
 
-static inline void bigint_truncate(bigint* b)
+static inline void BIGINT_NAMESPACE(truncate)(bigint* b)
 {
   while (b->size && b->words[b->size - 1] == 0)
     b->size--;
   b->sign = b->size && b->sign;
 }
 
-static inline size_t bigint_word_bitlength(bigint_word a)
+static inline size_t BIGINT_NAMESPACE(word_bitlength)(bigint_word a)
 {
 #if defined(_WIN32) && BIGINT_WORD_WIDTH <= 4
   unsigned long index;
@@ -462,7 +488,7 @@ static inline size_t bigint_word_bitlength(bigint_word a)
 #endif
 }
 
-static inline int bigint_get_bit(const bigint* a, size_t b)
+static inline int BIGINT_NAMESPACE(get_bit)(const bigint* a, size_t b)
 {
   size_t word = b / BIGINT_WORD_BIT;
   size_t bit = b % BIGINT_WORD_BIT;
@@ -471,14 +497,14 @@ static inline int bigint_get_bit(const bigint* a, size_t b)
   return (a->words[word] >> bit) & 1;
 }
 
-static inline int bigint_set_bit(bigint* a, size_t b, uint8_t val)
+static inline int BIGINT_NAMESPACE(set_bit)(bigint* a, size_t b, uint8_t val)
 {
   size_t word = b / BIGINT_WORD_BIT;
   size_t bit = b % BIGINT_WORD_BIT;
   int r;
 
   if (a->size <= word) {
-    if ((r = bigint_resize(a, word + 1)) != 0)
+    if ((r = BIGINT_NAMESPACE(resize)(a, word + 1)) != 0)
       return r;
   }
 
@@ -495,32 +521,32 @@ static inline int bigint_set_bit(bigint* a, size_t b, uint8_t val)
   return 0;
 }
 
-static size_t bigint_bitlength(const bigint* a)
+static size_t BIGINT_NAMESPACE(bitlength)(const bigint* a)
 {
   size_t l;
   if (a->size == 0)
     return 0;
   l = a->size - 1;
-  return bigint_word_bitlength(a->words[l]) + (l * BIGINT_WORD_BIT);
+  return BIGINT_NAMESPACE(word_bitlength)(a->words[l]) + (l * BIGINT_WORD_BIT);
 }
 
-static int bigint_append(bigint* b, bigint_word val)
+static int BIGINT_NAMESPACE(append)(bigint* b, bigint_word val)
 {
   int r;
   size_t old_size = b->size;
-  r = bigint_resize(b, b->size + 1);
+  r = BIGINT_NAMESPACE(resize)(b, b->size + 1);
   if (r)
     return r;
   b->words[old_size] = val;
   return 0;
 }
 
-static int bigint_word_add(bigint_word* a, bigint_word b)
+static int BIGINT_NAMESPACE(word_add)(bigint_word* a, bigint_word b)
 {
   return (*a += b) < b;
 }
 
-static int bigint_word_sub(bigint_word* a, bigint_word b)
+static int BIGINT_NAMESPACE(word_sub)(bigint_word* a, bigint_word b)
 {
   bigint_word tmp = *a;
   return (*a -= b) > tmp;
@@ -528,7 +554,8 @@ static int bigint_word_sub(bigint_word* a, bigint_word b)
 
 /* performs *a *= b and returns the carry, using
  * only the single-word data type */
-static inline bigint_word bigint_word_mul_cross(bigint_word* a, bigint_word b)
+static inline bigint_word BIGINT_NAMESPACE(word_mul_cross)(bigint_word* a,
+                                                           bigint_word b)
 {
   /* assuming a 32-bit word size -
      * using cross-products we can say:
@@ -554,11 +581,11 @@ static inline bigint_word bigint_word_mul_cross(bigint_word* a, bigint_word b)
   res_hi = a_hi * b_hi;
 
   tmp = a_hi * b_lo;
-  res_hi += bigint_word_add(&res_lo, tmp << BIGINT_HALF_WORD_BIT);
+  res_hi += BIGINT_NAMESPACE(word_add)(&res_lo, tmp << BIGINT_HALF_WORD_BIT);
   res_hi += (tmp >> BIGINT_HALF_WORD_BIT);
 
   tmp = a_lo * b_hi;
-  res_hi += bigint_word_add(&res_lo, tmp << BIGINT_HALF_WORD_BIT);
+  res_hi += BIGINT_NAMESPACE(word_add)(&res_lo, tmp << BIGINT_HALF_WORD_BIT);
   res_hi += (tmp >> BIGINT_HALF_WORD_BIT);
 
   *a = res_lo;
@@ -569,7 +596,8 @@ static inline bigint_word bigint_word_mul_cross(bigint_word* a, bigint_word b)
 /* attempt to find method for multiplication with a larger type */
 
 #ifdef BIGINT_DWORD_TYPE
-static inline bigint_word bigint_word_mul_double(bigint_word* a, bigint_word b)
+static inline bigint_word BIGINT_NAMESPACE(word_mul_double)(bigint_word* a,
+                                                            bigint_word b)
 {
   BIGINT_DWORD_TYPE res;
   res = *a;
@@ -580,7 +608,8 @@ static inline bigint_word bigint_word_mul_double(bigint_word* a, bigint_word b)
 }
 #define BIGINT_WORD_MUL_DOUBLE
 #elif BIGINT_WORD_WIDTH == 8 && defined(_WIN64)
-static inline bigint_word bigint_word_mul_double(bigint_word* a, bigint_word b)
+static inline bigint_word BIGINT_NAMESPACE(word_mul_double)(bigint_word* a,
+                                                            bigint_word b)
 {
   uint64_t lowProduct;
   uint64_t highProduct;
@@ -595,12 +624,12 @@ static inline bigint_word bigint_word_mul_double(bigint_word* a, bigint_word b)
 #endif
 
 /* performs *a *= b and returns the carry */
-static bigint_word bigint_word_mul(bigint_word* a, bigint_word b)
+static bigint_word BIGINT_NAMESPACE(word_mul)(bigint_word* a, bigint_word b)
 {
 #if defined(BIGINT_SINGLE_WORD_ONLY) || !defined(BIGINT_WORD_MUL_DOUBLE)
-  return bigint_word_mul_cross(a, b);
+  return BIGINT_NAMESPACE(word_mul_cross)(a, b);
 #else /* !SINGLE_WORD_ONLY */
-  return bigint_word_mul_double(a, b);
+  return BIGINT_NAMESPACE(word_mul_double)(a, b);
 #endif
 }
 
@@ -644,7 +673,7 @@ static bigint_word bigint_word_mul(bigint_word* a, bigint_word b)
 
 BIGINT_WORD_MUL_CONST(10)
 
-static int bigint_add_word(bigint* a, bigint_word val)
+static int BIGINT_NAMESPACE(add_word)(bigint* a, bigint_word val)
 {
   int r;
   size_t i = 0;
@@ -653,27 +682,27 @@ static int bigint_add_word(bigint* a, bigint_word val)
   if (!val)
     return 0; /* adding 0 */
   if (!a->size) {
-    if ((r = bigint_resize(a, 1)) != 0)
+    if ((r = BIGINT_NAMESPACE(resize)(a, 1)) != 0)
       return r;
   }
 
-  carry = bigint_word_add(&a->words[0], val);
+  carry = BIGINT_NAMESPACE(word_add)(&a->words[0], val);
 
   i = 1;
   while (i < a->size && carry) {
-    carry = bigint_word_add(&a->words[i], carry);
+    carry = BIGINT_NAMESPACE(word_add)(&a->words[i], carry);
     i++;
   }
   if (carry) {
-    if ((r = bigint_append(a, carry)) != 0)
+    if ((r = BIGINT_NAMESPACE(append)(a, carry)) != 0)
       return r;
   }
 
-  bigint_truncate(a);
+  BIGINT_NAMESPACE(truncate)(a);
   return 0;
 }
 
-static int bigint_add_unsigned(bigint* a, const bigint* b)
+static int BIGINT_NAMESPACE(add_unsigned)(bigint* a, const bigint* b)
 {
   int r;
   size_t i = 0;
@@ -687,29 +716,29 @@ static int bigint_add_unsigned(bigint* a, const bigint* b)
   b_size = b->size;
   max_size = a_size > b_size ? a_size : b_size;
 
-  if ((r = bigint_resize(a, max_size)) != 0)
+  if ((r = BIGINT_NAMESPACE(resize)(a, max_size)) != 0)
     return r;
 
   i = 0;
   while (i < b->size) {
-    carry = bigint_word_add(&a->words[i], carry);
-    carry += bigint_word_add(&a->words[i], b->words[i]);
+    carry = BIGINT_NAMESPACE(word_add)(&a->words[i], carry);
+    carry += BIGINT_NAMESPACE(word_add)(&a->words[i], b->words[i]);
     i++;
   }
   while (i < max_size && carry) {
-    carry = bigint_word_add(&a->words[i], carry);
+    carry = BIGINT_NAMESPACE(word_add)(&a->words[i], carry);
     i++;
   }
   if (carry) {
-    if ((r = bigint_append(a, carry)) != 0)
+    if ((r = BIGINT_NAMESPACE(append)(a, carry)) != 0)
       return r;
   }
 
-  bigint_truncate(a);
+  BIGINT_NAMESPACE(truncate)(a);
   return 0;
 }
 
-static int bigint_sub_unsigned(bigint* a, const bigint* b)
+static int BIGINT_NAMESPACE(sub_unsigned)(bigint* a, const bigint* b)
 {
   size_t i;
   bigint_word carry = 0;
@@ -719,19 +748,19 @@ static int bigint_sub_unsigned(bigint* a, const bigint* b)
 
   i = 0;
   while (i < b->size) {
-    carry = bigint_word_sub(&a->words[i], carry);
-    carry += bigint_word_sub(&a->words[i], b->words[i]);
+    carry = BIGINT_NAMESPACE(word_sub)(&a->words[i], carry);
+    carry += BIGINT_NAMESPACE(word_sub)(&a->words[i], b->words[i]);
     i++;
   }
   while (i < a->size && carry) {
-    carry = bigint_word_sub(&a->words[i], carry);
+    carry = BIGINT_NAMESPACE(word_sub)(&a->words[i], carry);
     i++;
   }
-  bigint_truncate(a);
+  BIGINT_NAMESPACE(truncate)(a);
   return 0;
 }
 
-static int bigint_cmp_abs(const bigint* a, const bigint* b)
+static int BIGINT_NAMESPACE(cmp_abs)(const bigint* a, const bigint* b)
 {
   size_t i;
   if (a->size != b->size)
@@ -745,7 +774,7 @@ static int bigint_cmp_abs(const bigint* a, const bigint* b)
 }
 
 BIGINT_FUNC
-int bigint_lshift_overwrite(bigint* c, size_t bits)
+int BIGINT_NAMESPACE(lshift_overwrite)(bigint* c, size_t bits)
 {
   int r;
   size_t words, expanded, i;
@@ -759,7 +788,7 @@ int bigint_lshift_overwrite(bigint* c, size_t bits)
 
   expanded = c->size + words + (bits != 0);
 
-  if ((r = bigint_resize(c, expanded)) != 0)
+  if ((r = BIGINT_NAMESPACE(resize)(c, expanded)) != 0)
     return r;
 
   if (bits == 0) {
@@ -782,22 +811,22 @@ int bigint_lshift_overwrite(bigint* c, size_t bits)
     c->words[i] = 0;
     i++;
   }
-  bigint_truncate(c);
+  BIGINT_NAMESPACE(truncate)(c);
   return 0;
 }
 
 BIGINT_FUNC
-int bigint_lshift(bigint* c, const bigint* a, size_t bits)
+int BIGINT_NAMESPACE(lshift)(bigint* c, const bigint* a, size_t bits)
 {
   int r;
 
-  if ((r = bigint_copy(c, a)) != 0)
+  if ((r = BIGINT_NAMESPACE(copy)(c, a)) != 0)
     return r;
-  return bigint_lshift_overwrite(c, bits);
+  return BIGINT_NAMESPACE(lshift_overwrite)(c, bits);
 }
 
 BIGINT_FUNC
-int bigint_rshift_overwrite(bigint* c, size_t bits)
+int BIGINT_NAMESPACE(rshift_overwrite)(bigint* c, size_t bits)
 {
   int r;
   size_t words, i;
@@ -829,9 +858,9 @@ int bigint_rshift_overwrite(bigint* c, size_t bits)
     }
     c->words[c->size - words - 1] = lo >> bits;
   }
-  if ((r = bigint_resize(c, c->size - words)) != 0)
+  if ((r = BIGINT_NAMESPACE(resize)(c, c->size - words)) != 0)
     return r;
-  bigint_truncate(c);
+  BIGINT_NAMESPACE(truncate)(c);
   return 0;
 }
 
@@ -857,15 +886,17 @@ BIGINT_RSHIFT_OVERWRITE_SMALL(3)
 BIGINT_RSHIFT_OVERWRITE_SMALL(1)
 
 BIGINT_FUNC
-int bigint_rshift(bigint* c, const bigint* a, size_t bits)
+int BIGINT_NAMESPACE(rshift)(bigint* c, const bigint* a, size_t bits)
 {
   int r;
-  if ((r = bigint_copy(c, a)) != 0)
+  if ((r = BIGINT_NAMESPACE(copy)(c, a)) != 0)
     return r;
-  return bigint_rshift_overwrite(c, bits);
+  return BIGINT_NAMESPACE(rshift_overwrite)(c, bits);
 }
 
-static int bigint_mul_long(bigint* c, const bigint* a, const bigint* b)
+static int BIGINT_NAMESPACE(mul_long)(bigint* c,
+                                      const bigint* a,
+                                      const bigint* b)
 {
   int r;
   size_t expanded;
@@ -879,7 +910,7 @@ static int bigint_mul_long(bigint* c, const bigint* a, const bigint* b)
 
   expanded = a->size + b->size + 1;
 
-  if ((r = bigint_resize(c, expanded)) != 0)
+  if ((r = BIGINT_NAMESPACE(resize)(c, expanded)) != 0)
     return r;
   c->sign = a->sign ^ b->sign;
 
@@ -888,9 +919,9 @@ static int bigint_mul_long(bigint* c, const bigint* a, const bigint* b)
     for (ia = 0; ia < a->size; ia++) {
 #if defined(BIGINT_SINGLE_WORD_ONLY) || !defined(BIGINT_DWORD_TYPE)
       lo = a->words[ia];
-      hi = bigint_word_mul(&lo, b->words[ib]);
-      hi += bigint_word_add(&lo, c->words[ia + ib]);
-      hi += bigint_word_add(&lo, carry);
+      hi = BIGINT_NAMESPACE(word_mul)(&lo, b->words[ib]);
+      hi += BIGINT_NAMESPACE(word_add)(&lo, c->words[ia + ib]);
+      hi += BIGINT_NAMESPACE(word_add)(&lo, carry);
       c->words[ia + ib] = lo;
       carry = hi;
 #else
@@ -905,11 +936,11 @@ static int bigint_mul_long(bigint* c, const bigint* a, const bigint* b)
     c->words[ib + a->size] = carry;
   }
 
-  bigint_truncate(c);
+  BIGINT_NAMESPACE(truncate)(c);
   return 0;
 }
 
-static int bigint_mul_word(bigint* a, bigint_word val)
+static int BIGINT_NAMESPACE(mul_word)(bigint* a, bigint_word val)
 {
   int r;
   size_t i = 0;
@@ -924,16 +955,16 @@ static int bigint_mul_word(bigint* a, bigint_word val)
 
   carry = 0;
   for (i = 0; i < a->size; i++) {
-    c = bigint_word_mul(&a->words[i], val);
-    c += bigint_word_add(&a->words[i], carry);
+    c = BIGINT_NAMESPACE(word_mul)(&a->words[i], val);
+    c += BIGINT_NAMESPACE(word_add)(&a->words[i], carry);
     carry = c;
   }
   if (carry) {
-    if ((r = bigint_append(a, carry)) != 0)
+    if ((r = BIGINT_NAMESPACE(append)(a, carry)) != 0)
       return r;
   }
 
-  bigint_truncate(a);
+  BIGINT_NAMESPACE(truncate)(a);
   return 0;
 }
 
@@ -962,14 +993,16 @@ BIGINT_MUL_CONST(10)
 /* does NOT accept a string with a leading 0x - that's handled in
  * bigint_from_string. does NOT parse a leading +/-, also handled
  * in bigint_from_string */
-static int bigint_from_string_base16(bigint* b, const char* str, size_t len)
+static int BIGINT_NAMESPACE(from_string_base16)(bigint* b,
+                                                const char* str,
+                                                size_t len)
 {
   bigint_word word;
   size_t i = 0;
   int r;
 
   while (i < len && str[i]) {
-    if ((r = bigint_lshift_overwrite(b, 4)) != 0)
+    if ((r = BIGINT_NAMESPACE(lshift_overwrite)(b, 4)) != 0)
       return r;
     switch (str[i]) {
       case '0':
@@ -1041,7 +1074,7 @@ static int bigint_from_string_base16(bigint* b, const char* str, size_t len)
       default:
         return BIGINT_EINVAL;
     }
-    if ((r = bigint_add_word(b, word)) != 0)
+    if ((r = BIGINT_NAMESPACE(add_word)(b, word)) != 0)
       return r;
     i++;
   }
@@ -1050,14 +1083,16 @@ static int bigint_from_string_base16(bigint* b, const char* str, size_t len)
 }
 
 /* does NOT parse a leading +/-, handled in bigint_from_string */
-static int bigint_from_string_base10(bigint* b, const char* str, size_t len)
+static int BIGINT_NAMESPACE(from_string_base10)(bigint* b,
+                                                const char* str,
+                                                size_t len)
 {
   bigint_word word;
   size_t i = 0;
   int r;
 
   while (i < len && str[i]) {
-    if ((r = bigint_mul_const_10(b)) != 0)
+    if ((r = BIGINT_NAMESPACE(mul_const_10)(b)) != 0)
       return r;
     switch (str[i]) {
       case '0':
@@ -1093,7 +1128,7 @@ static int bigint_from_string_base10(bigint* b, const char* str, size_t len)
       default:
         return BIGINT_EINVAL;
     }
-    if ((r = bigint_add_word(b, word)) != 0)
+    if ((r = BIGINT_NAMESPACE(add_word)(b, word)) != 0)
       return r;
     i++;
   }
@@ -1102,14 +1137,16 @@ static int bigint_from_string_base10(bigint* b, const char* str, size_t len)
 }
 
 /* does NOT parse a leading +/-, handled in bigint_from_string */
-static int bigint_from_string_base8(bigint* b, const char* str, size_t len)
+static int BIGINT_NAMESPACE(from_string_base8)(bigint* b,
+                                               const char* str,
+                                               size_t len)
 {
   bigint_word word;
   size_t i = 0;
   int r;
 
   while (i < len && str[i]) {
-    if ((r = bigint_lshift_overwrite(b, 3)) != 0)
+    if ((r = BIGINT_NAMESPACE(lshift_overwrite)(b, 3)) != 0)
       return r;
     switch (str[i]) {
       case '0':
@@ -1139,7 +1176,7 @@ static int bigint_from_string_base8(bigint* b, const char* str, size_t len)
       default:
         return BIGINT_EINVAL;
     }
-    if ((r = bigint_add_word(b, word)) != 0)
+    if ((r = BIGINT_NAMESPACE(add_word)(b, word)) != 0)
       return r;
     i++;
   }
@@ -1148,14 +1185,16 @@ static int bigint_from_string_base8(bigint* b, const char* str, size_t len)
 }
 
 /* does NOT parse a leading +/-, handled in bigint_from_string */
-static int bigint_from_string_base2(bigint* b, const char* str, size_t len)
+static int BIGINT_NAMESPACE(from_string_base2)(bigint* b,
+                                               const char* str,
+                                               size_t len)
 {
   bigint_word word;
   size_t i = 0;
   int r;
 
   while (i < len && str[i]) {
-    if ((r = bigint_lshift_overwrite(b, 1)) != 0)
+    if ((r = BIGINT_NAMESPACE(lshift_overwrite)(b, 1)) != 0)
       return r;
     switch (str[i]) {
       case '0':
@@ -1167,7 +1206,7 @@ static int bigint_from_string_base2(bigint* b, const char* str, size_t len)
       default:
         return BIGINT_EINVAL;
     }
-    if ((r = bigint_add_word(b, word)) != 0)
+    if ((r = BIGINT_NAMESPACE(add_word)(b, word)) != 0)
       return r;
     i++;
   }
@@ -1175,13 +1214,15 @@ static int bigint_from_string_base2(bigint* b, const char* str, size_t len)
   return 0;
 }
 
-static int bigint_from_string_base0(bigint* b, const char* str, size_t len)
+static int BIGINT_NAMESPACE(from_string_base0)(bigint* b,
+                                               const char* str,
+                                               size_t len)
 {
   if (str[0] == '0') {
     str++;
     len--;
     if (len == 0) {
-      bigint_reset(b);
+      BIGINT_NAMESPACE(reset)(b);
       return 0;
     }
 
@@ -1190,7 +1231,7 @@ static int bigint_from_string_base0(bigint* b, const char* str, size_t len)
       len--;
       if (len == 0)
         return BIGINT_EINVAL;
-      return bigint_from_string_base16(b, str, len);
+      return BIGINT_NAMESPACE(from_string_base16)(b, str, len);
     }
 
     if (str[0] == 'b' || str[0] == 'B') {
@@ -1198,25 +1239,25 @@ static int bigint_from_string_base0(bigint* b, const char* str, size_t len)
       len--;
       if (len == 0)
         return BIGINT_EINVAL;
-      return bigint_from_string_base2(b, str, len);
+      return BIGINT_NAMESPACE(from_string_base2)(b, str, len);
     }
 
-    return bigint_from_string_base8(b, str, len);
+    return BIGINT_NAMESPACE(from_string_base8)(b, str, len);
   }
 
   if (len > 1 && str[0] == 'x') {
     str++;
     len--;
-    return bigint_from_string_base16(b, str, len);
+    return BIGINT_NAMESPACE(from_string_base16)(b, str, len);
   }
 
   if (len > 1 && str[0] == 'b') {
     str++;
     len--;
-    return bigint_from_string_base2(b, str, len);
+    return BIGINT_NAMESPACE(from_string_base2)(b, str, len);
   }
 
-  return bigint_from_string_base10(b, str, len);
+  return BIGINT_NAMESPACE(from_string_base10)(b, str, len);
 }
 
 /* allows strings like:
@@ -1229,15 +1270,15 @@ static int bigint_from_string_base0(bigint* b, const char* str, size_t len)
  */
 
 BIGINT_FUNC
-int bigint_from_string(bigint* b,
-                       const char* str,
-                       size_t len,
-                       unsigned int base)
+int BIGINT_NAMESPACE(from_string)(bigint* b,
+                                  const char* str,
+                                  size_t len,
+                                  unsigned int base)
 {
   int r = 0;
   size_t sign = 0;
 
-  bigint_reset(b);
+  BIGINT_NAMESPACE(reset)(b);
 
   if (len == 0)
     return BIGINT_EINVAL;
@@ -1261,15 +1302,15 @@ int bigint_from_string(bigint* b,
         str += 2;
         len -= 2;
       }
-      r = bigint_from_string_base2(b, str, len);
+      r = BIGINT_NAMESPACE(from_string_base2)(b, str, len);
       break;
     }
     case 8: {
-      r = bigint_from_string_base8(b, str, len);
+      r = BIGINT_NAMESPACE(from_string_base8)(b, str, len);
       break;
     }
     case 10:
-      r = bigint_from_string_base10(b, str, len);
+      r = BIGINT_NAMESPACE(from_string_base10)(b, str, len);
       break;
     case 16: {
       if (len > 1 && str[0] == 'x') {
@@ -1281,11 +1322,11 @@ int bigint_from_string(bigint* b,
         str += 2;
         len -= 2;
       }
-      r = bigint_from_string_base16(b, str, len);
+      r = BIGINT_NAMESPACE(from_string_base16)(b, str, len);
       break;
     }
     case 0:
-      r = bigint_from_string_base0(b, str, len);
+      r = BIGINT_NAMESPACE(from_string_base0)(b, str, len);
       break;
     default:
       return BIGINT_EINVAL;
@@ -1297,22 +1338,24 @@ int bigint_from_string(bigint* b,
 }
 
 BIGINT_FUNC
-int bigint_from_cstring(bigint* b, const char* str, unsigned int base)
+int BIGINT_NAMESPACE(from_cstring)(bigint* b,
+                                   const char* str,
+                                   unsigned int base)
 {
-  return bigint_from_string(b, str, strlen(str), base);
+  return BIGINT_NAMESPACE(from_string)(b, str, strlen(str), base);
 }
 
 BIGINT_FUNC
-void bigint_init(bigint* b)
+void BIGINT_NAMESPACE(init)(bigint* b)
 {
   *b = *BIGINT_ZERO;
   b->limit = BIGINT_DEFAULT_LIMIT;
 }
 
 BIGINT_FUNC
-void bigint_free(bigint* b)
+void BIGINT_NAMESPACE(free)(bigint* b)
 {
-  bigint_reset(b);
+  BIGINT_NAMESPACE(reset)(b);
 #ifndef BIGINT_NO_MALLOC
   if (b->alloc != 0) {
     free(b->words);
@@ -1323,7 +1366,7 @@ void bigint_free(bigint* b)
 }
 
 BIGINT_FUNC
-int bigint_copy(bigint* dest, const bigint* src)
+int BIGINT_NAMESPACE(copy)(bigint* dest, const bigint* src)
 {
   int r;
   size_t limit;
@@ -1332,7 +1375,7 @@ int bigint_copy(bigint* dest, const bigint* src)
   limit = dest->limit;
   dest->limit = src->limit;
   if (src->size != dest->size) {
-    r = bigint_resize(dest, src->size);
+    r = BIGINT_NAMESPACE(resize)(dest, src->size);
     if (r) {
       dest->limit = limit;
       return r;
@@ -1352,90 +1395,97 @@ int bigint_copy(bigint* dest, const bigint* src)
 }
 
 BIGINT_FUNC
-int bigint_from_word(bigint* b, bigint_word val)
+int BIGINT_NAMESPACE(from_word)(bigint* b, bigint_word val)
 {
-  bigint_reset(b);
+  BIGINT_NAMESPACE(reset)(b);
   if (!val)
     return 0;
-  return bigint_append(b, val);
+  return BIGINT_NAMESPACE(append)(b, val);
 }
 
 BIGINT_FUNC
-int bigint_from_u8(bigint* b, uint8_t val)
+int BIGINT_NAMESPACE(from_u8)(bigint* b, uint8_t val)
 {
-  bigint_reset(b);
+  BIGINT_NAMESPACE(reset)(b);
   if (!val)
     return 0;
-  return bigint_append(b, (bigint_word)(val & BIGINT_WORD_MASK));
+  return BIGINT_NAMESPACE(append)(
+      b, (BIGINT_NAMESPACE(word))(val & BIGINT_WORD_MASK));
 }
 
 BIGINT_FUNC
-int bigint_from_u16(bigint* b, uint16_t val)
+int BIGINT_NAMESPACE(from_u16)(bigint* b, uint16_t val)
 {
   int r;
-  bigint_reset(b);
+  BIGINT_NAMESPACE(reset)(b);
   if (!val)
     return 0;
 #if BIGINT_WORD_WIDTH < 2
   while (val) {
-    r = bigint_append(b, (bigint_word)(val & BIGINT_WORD_MASK));
+    r = BIGINT_NAMESPACE(append)(
+        b, (BIGINT_NAMESPACE(word))(val & BIGINT_WORD_MASK));
     if (r)
       return r;
     val >>= BIGINT_WORD_BIT;
   }
 #else
-  r = bigint_append(b, (bigint_word)(val & BIGINT_WORD_MASK));
+  r = BIGINT_NAMESPACE(append)(
+      b, (BIGINT_NAMESPACE(word))(val & BIGINT_WORD_MASK));
 #endif
   return r;
 }
 
 BIGINT_FUNC
-int bigint_from_u32(bigint* b, uint32_t val)
+int BIGINT_NAMESPACE(from_u32)(bigint* b, uint32_t val)
 {
   int r;
-  bigint_reset(b);
+  BIGINT_NAMESPACE(reset)(b);
   if (!val)
     return 0;
 #if BIGINT_WORD_WIDTH < 4
   while (val) {
-    r = bigint_append(b, (bigint_word)(val & BIGINT_WORD_MASK));
+    r = BIGINT_NAMESPACE(append)(
+        b, (BIGINT_NAMESPACE(word))(val & BIGINT_WORD_MASK));
     if (r)
       return r;
     val >>= BIGINT_WORD_BIT;
   }
 #else
-  r = bigint_append(b, (bigint_word)(val & BIGINT_WORD_MASK));
+  r = BIGINT_NAMESPACE(append)(
+      b, (BIGINT_NAMESPACE(word))(val & BIGINT_WORD_MASK));
 #endif
   return r;
 }
 
 BIGINT_FUNC
-int bigint_from_u64(bigint* b, uint64_t val)
+int BIGINT_NAMESPACE(from_u64)(bigint* b, uint64_t val)
 {
   int r;
-  bigint_reset(b);
+  BIGINT_NAMESPACE(reset)(b);
   if (!val)
     return 0;
 #if BIGINT_WORD_WIDTH < 8
   while (val) {
-    r = bigint_append(b, (bigint_word)(val & BIGINT_WORD_MASK));
+    r = BIGINT_NAMESPACE(append)(
+        b, (BIGINT_NAMESPACE(word))(val & BIGINT_WORD_MASK));
     if (r)
       return r;
     val >>= BIGINT_WORD_BIT;
   }
 #else
-  r = bigint_append(b, (bigint_word)(val & BIGINT_WORD_MASK));
+  r = BIGINT_NAMESPACE(append)(
+      b, (BIGINT_NAMESPACE(word))(val & BIGINT_WORD_MASK));
 #endif
   return r;
 }
 
 BIGINT_FUNC
-int bigint_from_i8(bigint* b, int8_t val)
+int BIGINT_NAMESPACE(from_i8)(bigint* b, int8_t val)
 {
   int r;
   uint8_t uval = val < 0 ? -val : val;
 
-  r = bigint_from_u8(b, uval);
+  r = BIGINT_NAMESPACE(from_u8)(b, uval);
   if (r)
     return r;
   b->sign = val < 0;
@@ -1443,12 +1493,12 @@ int bigint_from_i8(bigint* b, int8_t val)
 }
 
 BIGINT_FUNC
-int bigint_from_i16(bigint* b, int16_t val)
+int BIGINT_NAMESPACE(from_i16)(bigint* b, int16_t val)
 {
   int r;
   uint16_t uval = val < 0 ? -val : val;
 
-  r = bigint_from_u16(b, uval);
+  r = BIGINT_NAMESPACE(from_u16)(b, uval);
   if (r)
     return r;
   b->sign = val < 0;
@@ -1456,12 +1506,12 @@ int bigint_from_i16(bigint* b, int16_t val)
 }
 
 BIGINT_FUNC
-int bigint_from_i32(bigint* b, int32_t val)
+int BIGINT_NAMESPACE(from_i32)(bigint* b, int32_t val)
 {
   int r;
   uint32_t uval = val < 0 ? -val : val;
 
-  r = bigint_from_u32(b, uval);
+  r = BIGINT_NAMESPACE(from_u32)(b, uval);
   if (r)
     return r;
   b->sign = val < 0;
@@ -1469,19 +1519,19 @@ int bigint_from_i32(bigint* b, int32_t val)
 }
 
 BIGINT_FUNC
-int bigint_from_i64(bigint* b, int64_t val)
+int BIGINT_NAMESPACE(from_i64)(bigint* b, int64_t val)
 {
   int r;
   uint64_t uval = val < 0 ? -val : val;
 
-  r = bigint_from_u64(b, uval);
+  r = BIGINT_NAMESPACE(from_u64)(b, uval);
   if (r)
     return r;
   b->sign = val < 0;
   return 0;
 }
 
-static inline uint64_t bigint_to_u64_internal(const bigint* b)
+static inline uint64_t BIGINT_NAMESPACE(to_u64_internal)(const bigint* b)
 {
   uint64_t tmp = 0;
   size_t i = b->size;
@@ -1500,27 +1550,27 @@ static inline uint64_t bigint_to_u64_internal(const bigint* b)
 }
 
 BIGINT_FUNC
-int bigint_to_u8(uint8_t* val, const bigint* b)
+int BIGINT_NAMESPACE(to_u8)(uint8_t* val, const bigint* b)
 {
   uint64_t tmp = 0;
 
-  if (bigint_bitlength(b) > 8)
+  if (BIGINT_NAMESPACE(bitlength)(b) > 8)
     return 1;
   if (b->size) {
-    tmp = bigint_to_u64_internal(b);
+    tmp = BIGINT_NAMESPACE(to_u64_internal)(b);
   }
   *val = (uint8_t)tmp;
   return 0;
 }
 
 BIGINT_FUNC
-int bigint_to_i8(int8_t* val, const bigint* b)
+int BIGINT_NAMESPACE(to_i8)(int8_t* val, const bigint* b)
 {
   uint8_t tmp = 0;
   uint8_t max = INT8_MAX;
   int r = 0;
 
-  if ((r = bigint_to_u8(&tmp, b)) != 0)
+  if ((r = BIGINT_NAMESPACE(to_u8)(&tmp, b)) != 0)
     return r;
   max += !!b->sign;
   if (tmp > max)
@@ -1531,27 +1581,27 @@ int bigint_to_i8(int8_t* val, const bigint* b)
 }
 
 BIGINT_FUNC
-int bigint_to_u16(uint16_t* val, const bigint* b)
+int BIGINT_NAMESPACE(to_u16)(uint16_t* val, const bigint* b)
 {
   uint64_t tmp = 0;
 
-  if (bigint_bitlength(b) > 16)
+  if (BIGINT_NAMESPACE(bitlength)(b) > 16)
     return 1;
   if (b->size) {
-    tmp = bigint_to_u64_internal(b);
+    tmp = BIGINT_NAMESPACE(to_u64_internal)(b);
   }
   *val = (uint16_t)tmp;
   return 0;
 }
 
 BIGINT_FUNC
-int bigint_to_i16(int16_t* val, const bigint* b)
+int BIGINT_NAMESPACE(to_i16)(int16_t* val, const bigint* b)
 {
   uint16_t tmp = 0;
   uint16_t max = INT16_MAX;
   int r = 0;
 
-  if ((r = bigint_to_u16(&tmp, b)) != 0)
+  if ((r = BIGINT_NAMESPACE(to_u16)(&tmp, b)) != 0)
     return r;
   max += !!b->sign;
   if (tmp > max)
@@ -1562,27 +1612,27 @@ int bigint_to_i16(int16_t* val, const bigint* b)
 }
 
 BIGINT_FUNC
-int bigint_to_u32(uint32_t* val, const bigint* b)
+int BIGINT_NAMESPACE(to_u32)(uint32_t* val, const bigint* b)
 {
   uint64_t tmp = 0;
 
-  if (bigint_bitlength(b) > 32)
+  if (BIGINT_NAMESPACE(bitlength)(b) > 32)
     return 1;
   if (b->size) {
-    tmp = bigint_to_u64_internal(b);
+    tmp = BIGINT_NAMESPACE(to_u64_internal)(b);
   }
   *val = (uint32_t)tmp;
   return 0;
 }
 
 BIGINT_FUNC
-int bigint_to_i32(int32_t* val, const bigint* b)
+int BIGINT_NAMESPACE(to_i32)(int32_t* val, const bigint* b)
 {
   uint32_t tmp = 0;
   uint32_t max = INT32_MAX;
   int r = 0;
 
-  if ((r = bigint_to_u32(&tmp, b)) != 0)
+  if ((r = BIGINT_NAMESPACE(to_u32)(&tmp, b)) != 0)
     return r;
   max += !!b->sign;
   if (tmp > max)
@@ -1593,27 +1643,27 @@ int bigint_to_i32(int32_t* val, const bigint* b)
 }
 
 BIGINT_FUNC
-int bigint_to_u64(uint64_t* val, const bigint* b)
+int BIGINT_NAMESPACE(to_u64)(uint64_t* val, const bigint* b)
 {
   uint64_t tmp = 0;
 
-  if (bigint_bitlength(b) > 64)
+  if (BIGINT_NAMESPACE(bitlength)(b) > 64)
     return 1;
   if (b->size) {
-    tmp = bigint_to_u64_internal(b);
+    tmp = BIGINT_NAMESPACE(to_u64_internal)(b);
   }
   *val = (uint64_t)tmp;
   return 0;
 }
 
 BIGINT_FUNC
-int bigint_to_i64(int64_t* val, const bigint* b)
+int BIGINT_NAMESPACE(to_i64)(int64_t* val, const bigint* b)
 {
   uint64_t tmp = 0;
   uint64_t max = INT64_MAX;
   int r = 0;
 
-  if ((r = bigint_to_u64(&tmp, b)) != 0)
+  if ((r = BIGINT_NAMESPACE(to_u64)(&tmp, b)) != 0)
     return r;
   max += !!b->sign;
   if (tmp > max)
@@ -1623,25 +1673,25 @@ int bigint_to_i64(int64_t* val, const bigint* b)
   return 0;
 }
 
-static int bigint_add_signed(bigint* c,
-                             const bigint* a,
-                             size_t a_sign,
-                             const bigint* b,
-                             size_t b_sign)
+static int BIGINT_NAMESPACE(add_signed)(bigint* c,
+                                        const bigint* a,
+                                        size_t a_sign,
+                                        const bigint* b,
+                                        size_t b_sign)
 {
   int r;
   int cmp;
 
   if (a_sign == b_sign) {
-    if ((r = bigint_copy(c, a)) != 0)
+    if ((r = BIGINT_NAMESPACE(copy)(c, a)) != 0)
       return r;
-    if ((r = bigint_add_unsigned(c, b)) != 0)
+    if ((r = BIGINT_NAMESPACE(add_unsigned)(c, b)) != 0)
       return r;
     c->sign = a_sign;
     return 0;
   }
 
-  cmp = bigint_cmp_abs(a, b);
+  cmp = BIGINT_NAMESPACE(cmp_abs)(a, b);
 
   if (cmp == 0) {
     /* adding positive and negative numbers with the same
@@ -1652,80 +1702,80 @@ static int bigint_add_signed(bigint* c,
   }
 
   if (cmp > 0) {
-    if ((r = bigint_copy(c, a)) != 0)
+    if ((r = BIGINT_NAMESPACE(copy)(c, a)) != 0)
       return r;
-    if ((r = bigint_sub_unsigned(c, b)) != 0)
+    if ((r = BIGINT_NAMESPACE(sub_unsigned)(c, b)) != 0)
       return r;
     c->sign = a_sign;
     return 0;
   }
 
-  if ((r = bigint_copy(c, b)) != 0)
+  if ((r = BIGINT_NAMESPACE(copy)(c, b)) != 0)
     return r;
-  if ((r = bigint_sub_unsigned(c, a)) != 0)
+  if ((r = BIGINT_NAMESPACE(sub_unsigned)(c, a)) != 0)
     return r;
   c->sign = b_sign;
   return 0;
 }
 
 BIGINT_FUNC
-int bigint_add(bigint* c, const bigint* a, const bigint* b)
+int BIGINT_NAMESPACE(add)(bigint* c, const bigint* a, const bigint* b)
 {
   int r;
   bigint tmp = BIGINT_INIT;
 
-  if ((r = bigint_copy(&tmp, c)) != 0)
+  if ((r = BIGINT_NAMESPACE(copy)(&tmp, c)) != 0)
     return r;
-  if ((r = bigint_add_signed(&tmp, a, a->sign, b, b->sign)) != 0)
+  if ((r = BIGINT_NAMESPACE(add_signed)(&tmp, a, a->sign, b, b->sign)) != 0)
     goto cleanup;
-  if ((r = bigint_copy(c, &tmp)) != 0)
+  if ((r = BIGINT_NAMESPACE(copy)(c, &tmp)) != 0)
     goto cleanup;
 
 cleanup:
-  bigint_free(&tmp);
+  BIGINT_NAMESPACE(free)(&tmp);
   return r;
 }
 
 BIGINT_FUNC
-int bigint_sub(bigint* c, const bigint* a, const bigint* b)
+int BIGINT_NAMESPACE(sub)(bigint* c, const bigint* a, const bigint* b)
 {
   int r;
   bigint tmp = BIGINT_INIT;
 
-  if ((r = bigint_copy(&tmp, c)) != 0)
+  if ((r = BIGINT_NAMESPACE(copy)(&tmp, c)) != 0)
     return r;
-  if ((r = bigint_add_signed(&tmp, a, a->sign, b, !b->sign)) != 0)
+  if ((r = BIGINT_NAMESPACE(add_signed)(&tmp, a, a->sign, b, !b->sign)) != 0)
     goto cleanup;
-  if ((r = bigint_copy(c, &tmp)) != 0)
+  if ((r = BIGINT_NAMESPACE(copy)(c, &tmp)) != 0)
     goto cleanup;
 
 cleanup:
-  bigint_free(&tmp);
+  BIGINT_NAMESPACE(free)(&tmp);
   return r;
 }
 
 BIGINT_FUNC
-int bigint_mul(bigint* c, const bigint* a, const bigint* b)
+int BIGINT_NAMESPACE(mul)(bigint* c, const bigint* a, const bigint* b)
 {
   int r;
   bigint tmp = BIGINT_INIT;
 
-  if ((r = bigint_copy(&tmp, c)) != 0)
+  if ((r = BIGINT_NAMESPACE(copy)(&tmp, c)) != 0)
     return r;
-  if ((r = bigint_mul_long(&tmp, a, b)) != 0)
+  if ((r = BIGINT_NAMESPACE(mul_long)(&tmp, a, b)) != 0)
     goto cleanup;
-  if ((r = bigint_copy(c, &tmp)) != 0)
+  if ((r = BIGINT_NAMESPACE(copy)(c, &tmp)) != 0)
     goto cleanup;
 
 cleanup:
-  bigint_free(&tmp);
+  BIGINT_NAMESPACE(free)(&tmp);
   return r;
 }
 
 BIGINT_FUNC
-void bigint_div_mod_word(bigint* numerator,
-                         bigint_word* remainder,
-                         bigint_word denominator)
+void BIGINT_NAMESPACE(div_mod_word)(bigint* numerator,
+                                    bigint_word* remainder,
+                                    bigint_word denominator)
 {
   size_t i;
   size_t j;
@@ -1762,7 +1812,7 @@ void bigint_div_mod_word(bigint* numerator,
     numerator->words[i] = dst_word;
   }
 
-  bigint_truncate(numerator);
+  BIGINT_NAMESPACE(truncate)(numerator);
   *remainder = r;
 }
 
@@ -1803,10 +1853,10 @@ void bigint_div_mod_word(bigint* numerator,
 BIGINT_DIV_MOD_WORD(10)
 
 BIGINT_FUNC
-int bigint_div_mod(bigint* quotient,
-                   bigint* remainder,
-                   const bigint* numerator,
-                   const bigint* denominator)
+int BIGINT_NAMESPACE(div_mod)(bigint* quotient,
+                              bigint* remainder,
+                              const bigint* numerator,
+                              const bigint* denominator)
 {
   int r;
   size_t n;
@@ -1815,24 +1865,25 @@ int bigint_div_mod(bigint* quotient,
   bigint rem = BIGINT_INIT;
   bigint den = BIGINT_INIT;
 
-  if ((r = bigint_copy(&rem, numerator)) != 0)
+  if ((r = BIGINT_NAMESPACE(copy)(&rem, numerator)) != 0)
     goto cleanup;
-  if ((r = bigint_copy(&den, denominator)) != 0)
+  if ((r = BIGINT_NAMESPACE(copy)(&den, denominator)) != 0)
     goto cleanup;
 
-  if (bigint_cmp_abs(&rem, denominator) >= 0) {
-    n = bigint_bitlength(numerator) - bigint_bitlength(denominator);
-    if ((r = bigint_lshift(&den, denominator, n)) != 0)
+  if (BIGINT_NAMESPACE(cmp_abs)(&rem, denominator) >= 0) {
+    n = BIGINT_NAMESPACE(bitlength)(numerator) -
+        BIGINT_NAMESPACE(bitlength)(denominator);
+    if ((r = BIGINT_NAMESPACE(lshift)(&den, denominator, n)) != 0)
       goto cleanup;
     n++; /* ensure we have at least 1 iteration */
     while (n--) {
-      if (bigint_cmp_abs(&rem, &den) >= 0) {
-        if ((r = bigint_sub_unsigned(&rem, &den)) != 0)
+      if (BIGINT_NAMESPACE(cmp_abs)(&rem, &den) >= 0) {
+        if ((r = BIGINT_NAMESPACE(sub_unsigned)(&rem, &den)) != 0)
           goto cleanup;
-        if ((r = bigint_set_bit(&quo, (size_t)n, 1)) != 0)
+        if ((r = BIGINT_NAMESPACE(set_bit)(&quo, (size_t)n, 1)) != 0)
           goto cleanup;
       }
-      if ((r = bigint_rshift_overwrite(&den, 1)) != 0)
+      if ((r = BIGINT_NAMESPACE(rshift_overwrite)(&den, 1)) != 0)
         goto cleanup;
     }
   }
@@ -1840,15 +1891,15 @@ int bigint_div_mod(bigint* quotient,
   quo.sign = numerator->sign ^ denominator->sign;
   rem.sign = numerator->sign;
 
-  if ((r = bigint_copy(quotient, &quo)) != 0)
+  if ((r = BIGINT_NAMESPACE(copy)(quotient, &quo)) != 0)
     goto cleanup;
-  if ((r = bigint_copy(remainder, &rem)) != 0)
+  if ((r = BIGINT_NAMESPACE(copy)(remainder, &rem)) != 0)
     goto cleanup;
 
 cleanup:
-  bigint_free(&quo);
-  bigint_free(&rem);
-  bigint_free(&den);
+  BIGINT_NAMESPACE(free)(&quo);
+  BIGINT_NAMESPACE(free)(&rem);
+  BIGINT_NAMESPACE(free)(&den);
   return r;
 }
 
@@ -1870,51 +1921,54 @@ static const bigint BIGINT_ONE_STORAGE = {
 static const bigint* BIGINT_ONE = &BIGINT_ONE_STORAGE;
 
 BIGINT_FUNC
-int bigint_inc(bigint* c, const bigint* a)
+int BIGINT_NAMESPACE(inc)(bigint* c, const bigint* a)
 {
-  return bigint_add(c, a, BIGINT_ONE);
+  return BIGINT_NAMESPACE(add)(c, a, BIGINT_ONE);
 }
 
 BIGINT_FUNC
-int bigint_dec(bigint* c, const bigint* a)
+int BIGINT_NAMESPACE(dec)(bigint* c, const bigint* a)
 {
-  return bigint_sub(c, a, BIGINT_ONE);
+  return BIGINT_NAMESPACE(sub)(c, a, BIGINT_ONE);
 }
 
 /* we don't take the sign into account on these functions,
  * that's handled in the bigint_to_string function */
-static size_t bigint_len_string_base16(const bigint* b)
+static size_t BIGINT_NAMESPACE(len_string_base16)(const bigint* b)
 {
-  size_t blen = bigint_bitlength(b);
+  size_t blen = BIGINT_NAMESPACE(bitlength)(b);
 
   return (blen >> 2) + (!!(blen & 0x03));
 }
 
 /* pre-computed 1.0 / log2(10.0); */
 static const double base10_scale = 0x1.34413509f79ffp-2;
-static size_t bigint_len_string_base10(const bigint* b)
+static size_t BIGINT_NAMESPACE(len_string_base10)(const bigint* b)
 {
-  size_t blen = (size_t)(((double)bigint_bitlength(b)) * base10_scale);
+  size_t blen =
+      (size_t)(((double)BIGINT_NAMESPACE(bitlength)(b)) * base10_scale);
 
   return ++blen;
 }
 
-static size_t bigint_len_string_base8(const bigint* b)
+static size_t BIGINT_NAMESPACE(len_string_base8)(const bigint* b)
 {
-  size_t blen = bigint_bitlength(b);
+  size_t blen = BIGINT_NAMESPACE(bitlength)(b);
 
   return (blen / 3) + (!!(blen % 3));
 }
 
-static size_t bigint_len_string_base2(const bigint* b)
+static size_t BIGINT_NAMESPACE(len_string_base2)(const bigint* b)
 {
-  return bigint_bitlength(b);
+  return BIGINT_NAMESPACE(bitlength)(b);
 }
 
-static const char* const bigint_alphabet = "0123456789abcdef";
+static const char* const BIGINT_NAMESPACE(alphabet) = "0123456789abcdef";
 
 BIGINT_NONNULL1
-static size_t bigint_to_string_base16(char* str, size_t len, bigint* b)
+static size_t BIGINT_NAMESPACE(to_string_base16)(char* str,
+                                                 size_t len,
+                                                 bigint* b)
 {
   size_t u = 0;
 
@@ -1923,21 +1977,23 @@ static size_t bigint_to_string_base16(char* str, size_t len, bigint* b)
     return 1;
   }
 
-  while ((u = bigint_len_string_base16(b)) > len) {
-    bigint_rshift_overwrite_small_4(b);
+  while ((u = BIGINT_NAMESPACE(len_string_base16)(b)) > len) {
+    BIGINT_NAMESPACE(rshift_overwrite_small_4)(b);
   }
   len = u;
 
   while (b->size) {
-    str[--u] = bigint_alphabet[b->words[0] & 0x0F];
-    bigint_rshift_overwrite_small_4(b);
+    str[--u] = BIGINT_NAMESPACE(alphabet)[b->words[0] & 0x0F];
+    BIGINT_NAMESPACE(rshift_overwrite_small_4)(b);
   }
 
   return len;
 }
 
 BIGINT_NONNULL1
-static size_t bigint_to_string_base10(char* str, size_t len, bigint* b)
+static size_t BIGINT_NAMESPACE(to_string_base10)(char* str,
+                                                 size_t len,
+                                                 bigint* b)
 {
   bigint_word rem;
   size_t u = 0;
@@ -1947,14 +2003,14 @@ static size_t bigint_to_string_base10(char* str, size_t len, bigint* b)
     return 1;
   }
 
-  while ((u = bigint_len_string_base10(b)) > len) {
-    bigint_div_mod_10(b, &rem);
+  while ((u = BIGINT_NAMESPACE(len_string_base10)(b)) > len) {
+    BIGINT_NAMESPACE(div_mod_10)(b, &rem);
   }
   len = u;
 
   while (b->size) {
-    bigint_div_mod_10(b, &rem);
-    str[--u] = bigint_alphabet[rem];
+    BIGINT_NAMESPACE(div_mod_10)(b, &rem);
+    str[--u] = BIGINT_NAMESPACE(alphabet)[rem];
   }
 
   if (u) {
@@ -1966,7 +2022,9 @@ static size_t bigint_to_string_base10(char* str, size_t len, bigint* b)
 }
 
 BIGINT_NONNULL1
-static size_t bigint_to_string_base8(char* str, size_t len, bigint* b)
+static size_t BIGINT_NAMESPACE(to_string_base8)(char* str,
+                                                size_t len,
+                                                bigint* b)
 {
   size_t u = 0;
 
@@ -1975,21 +2033,23 @@ static size_t bigint_to_string_base8(char* str, size_t len, bigint* b)
     return 1;
   }
 
-  while ((u = bigint_len_string_base8(b)) > len) {
-    bigint_rshift_overwrite_small_3(b);
+  while ((u = BIGINT_NAMESPACE(len_string_base8)(b)) > len) {
+    BIGINT_NAMESPACE(rshift_overwrite_small_3)(b);
   }
   len = u;
 
   while (b->size) {
-    str[--u] = bigint_alphabet[b->words[0] & 0x07];
-    bigint_rshift_overwrite_small_3(b);
+    str[--u] = BIGINT_NAMESPACE(alphabet)[b->words[0] & 0x07];
+    BIGINT_NAMESPACE(rshift_overwrite_small_3)(b);
   }
 
   return len;
 }
 
 BIGINT_NONNULL1
-static size_t bigint_to_string_base2(char* str, size_t len, bigint* b)
+static size_t BIGINT_NAMESPACE(to_string_base2)(char* str,
+                                                size_t len,
+                                                bigint* b)
 {
   size_t u = 0;
 
@@ -1998,24 +2058,24 @@ static size_t bigint_to_string_base2(char* str, size_t len, bigint* b)
     return 1;
   }
 
-  while ((u = bigint_bitlength(b)) > len) {
-    bigint_rshift_overwrite_small_1(b);
+  while ((u = BIGINT_NAMESPACE(bitlength)(b)) > len) {
+    BIGINT_NAMESPACE(rshift_overwrite_small_1)(b);
   }
   len = u;
 
   while (b->size) {
-    str[--u] = bigint_alphabet[b->words[0] & 0x01];
-    bigint_rshift_overwrite_small_1(b);
+    str[--u] = BIGINT_NAMESPACE(alphabet)[b->words[0] & 0x01];
+    BIGINT_NAMESPACE(rshift_overwrite_small_1)(b);
   }
 
   return len;
 }
 
 BIGINT_FUNC
-size_t bigint_to_string(char* str,
-                        size_t len,
-                        const bigint* b,
-                        unsigned int base)
+size_t BIGINT_NAMESPACE(to_string)(char* str,
+                                   size_t len,
+                                   const bigint* b,
+                                   unsigned int base)
 {
   bigint tmp = BIGINT_INIT;
   int r;
@@ -2025,14 +2085,14 @@ size_t bigint_to_string(char* str,
   if (str == NULL) {
     switch (base) {
       case 2:
-        return 2 + b->sign + bigint_len_string_base2(b);
+        return 2 + b->sign + BIGINT_NAMESPACE(len_string_base2)(b);
       case 8:
-        return 1 + b->sign + bigint_len_string_base8(b);
+        return 1 + b->sign + BIGINT_NAMESPACE(len_string_base8)(b);
       case 0: /* fall-through */
       case 10:
-        return b->sign + bigint_len_string_base10(b);
+        return b->sign + BIGINT_NAMESPACE(len_string_base10)(b);
       case 16:
-        return 2 + b->sign + bigint_len_string_base16(b);
+        return 2 + b->sign + BIGINT_NAMESPACE(len_string_base16)(b);
       default:
         break;
     }
@@ -2083,26 +2143,26 @@ size_t bigint_to_string(char* str,
     return u;
 
   /* TODO can this copy be avoided? */
-  if ((r = bigint_copy(&tmp, b)) != 0)
+  if ((r = BIGINT_NAMESPACE(copy)(&tmp, b)) != 0)
     return 0;
   switch (base) {
     case 2:
-      res = bigint_to_string_base2(str, len, &tmp);
+      res = BIGINT_NAMESPACE(to_string_base2)(str, len, &tmp);
       break;
     case 8:
-      res = bigint_to_string_base8(str, len, &tmp);
+      res = BIGINT_NAMESPACE(to_string_base8)(str, len, &tmp);
       break;
     case 0: /* fall-through */
     case 10:
-      res = bigint_to_string_base10(str, len, &tmp);
+      res = BIGINT_NAMESPACE(to_string_base10)(str, len, &tmp);
       break;
     case 16:
-      res = bigint_to_string_base16(str, len, &tmp);
+      res = BIGINT_NAMESPACE(to_string_base16)(str, len, &tmp);
       break;
     default:
       break;
   }
-  bigint_free(&tmp);
+  BIGINT_NAMESPACE(free)(&tmp);
 
   if (res != 0)
     res += u;
@@ -2110,14 +2170,14 @@ size_t bigint_to_string(char* str,
 }
 
 BIGINT_FUNC
-int bigint_cmp(const bigint* a, const bigint* b)
+int BIGINT_NAMESPACE(cmp)(const bigint* a, const bigint* b)
 {
   if (!a->size && !b->size)
     return 0;
   if (a->sign && b->sign)
-    return bigint_cmp_abs(b, a);
+    return BIGINT_NAMESPACE(cmp_abs)(b, a);
   if (a->sign == b->sign)
-    return bigint_cmp_abs(a, b);
+    return BIGINT_NAMESPACE(cmp_abs)(a, b);
   return a->sign && !b->sign ? -1 : 1;
 }
 
@@ -2153,6 +2213,7 @@ int bigint_cmp(const bigint* a, const bigint* b)
 #undef BIGINT_WORD_SIZE
 #undef BIGINT_WORD_TYPE
 #undef BIGINT_WORD_WIDTH
+#undef BIGINT_NAMESPACE
 #endif
 
 /*
