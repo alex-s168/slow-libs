@@ -86,6 +86,10 @@
 #ifndef SLOWCRYPT_CHACHA20_H
 #define SLOWCRYPT_CHACHA20_H
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #ifndef SLOWCRYPT_CHACHA20_UINT32
 #include <stdint.h>
 #define SLOWCRYPT_CHACHA20_UINT32 uint32_t
@@ -284,6 +288,10 @@ SLOWCRYPT_CHACHA20_FUNC void slowcrypt_chacha20_block(
   slowcrypt_chacha20_serialize_xor(data, state);
 }
 
+#endif
+
+#ifdef __cplusplus
+}
 #endif
 
 #endif
