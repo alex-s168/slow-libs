@@ -1,8 +1,9 @@
 # slow-libs single-header libraries
-MIT / Public Domain (see ./LICENSE)
+MIT licennced  (see ./LICENSE)
 
 Most libraries are not actually slow, but that is just the naming scheme.
 
+Each library is documentated at the top of each header file
 
 ## Features of all libraries
 - C89 (or later) compatible

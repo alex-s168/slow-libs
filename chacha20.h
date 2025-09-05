@@ -2,6 +2,8 @@
  * Copyright (c) 2025 Alexander Nutz
  * MIT licensed, see below documentation
  *
+ * Latest version can be found at: https://gitea.vxcc.dev/alexander.nutz/slow-libs
+ *
  *
  * ======== ChaCha20 stream chiper ========
  *
