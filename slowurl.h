@@ -12,8 +12,8 @@ Please include and configure slowarr.h first;
 
 SLOWARR_Header(char);
 
-typedef struct {
-
+typedef struct
+{
 } SLOWURL_NAMESPACE();
 
 #ifdef SLOWURL_IMPLEMENTATION

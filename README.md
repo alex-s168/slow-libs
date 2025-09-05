@@ -44,3 +44,11 @@ All cryptography libraries list possible side channel attacks in their documenta
 - TODO: rng
 - TODO: length extension
 - TODO: password hashing
+
+
+## Contribution guide
+- Please use `clang-format` (and the provided `.clang-format` style)
+  If you do not want to use `clang-format`, try to match the code style of other existing code,
+  and a maintainer will format your code on merge.
+- Do not break portability of an existing "finished" library
+- Make new libraries as portable as possible (in a reasonable amount of time)

@@ -28,7 +28,8 @@ static char expected[] = {
     0xF2, 0x78, 0x5E, 0x42, 0x87, 0x4D,
 };
 
-int main(int argc, char **argv) {
+int main(int argc, char** argv)
+{
   slowcrypt_chacha20 state[2];
   char buf[64];
   int i, j, blksz;

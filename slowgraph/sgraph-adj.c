@@ -1,8 +1,9 @@
 #define SLOWGRAPH_IMPL
 #include "../slowgraph.h"
 
-static void write_csv_field(char const *s) {
-  char const *y;
+static void write_csv_field(char const* s)
+{
+  char const* y;
   int quote = 0;
   for (y = s; *y; y++) {
     if (*y == '\n' || *y == '"') {
@@ -24,8 +25,9 @@ static void write_csv_field(char const *s) {
     putchar('"');
 }
 
-static void dump_adj_matrix_row(SlowGraph *g, SlowGraphNode *row) {
-  SlowGraphNode *col;
+static void dump_adj_matrix_row(SlowGraph* g, SlowGraphNode* row)
+{
+  SlowGraphNode* col;
   write_csv_field(row->name);
   printf(",");
   for (col = g->first; col; col = col->next) {
@@ -38,8 +40,9 @@ static void dump_adj_matrix_row(SlowGraph *g, SlowGraphNode *row) {
   printf("\n");
 }
 
-static void dump_adj_matrix(SlowGraph *g) {
-  SlowGraphNode *n;
+static void dump_adj_matrix(SlowGraph* g)
+{
+  SlowGraphNode* n;
   printf(",");
   for (n = g->first; n; n = n->next) {
     if (n != g->first)
@@ -52,7 +55,8 @@ static void dump_adj_matrix(SlowGraph *g) {
   }
 }
 
-int main(int argc, char **argv) {
+int main(int argc, char** argv)
+{
   SlowGraph graph = {0};
 
   if (SlowGraph_readDGTXT(&graph, stdin))

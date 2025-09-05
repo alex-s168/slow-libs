@@ -68,11 +68,11 @@
 #ifndef SLOWARR_ON_MALLOC_FAIL
 #include <stdio.h>
 #include <stdlib.h>
-#define SLOWARR_ON_MALLOC_FAIL(nb)                                             \
-  do {                                                                         \
-    fprintf(stderr, "\nmemory allocation of %lu bytes failed!\n",              \
-            (unsigned long)nb);                                                \
-    exit(1);                                                                   \
+#define SLOWARR_ON_MALLOC_FAIL(nb)                                \
+  do {                                                            \
+    fprintf(stderr, "\nmemory allocation of %lu bytes failed!\n", \
+            (unsigned long)nb);                                   \
+    exit(1);                                                      \
   } while (0)
 #endif
 
@@ -80,17 +80,37 @@
 #define SLOWARR__ZEROIZE (1 << 1)  /** for cryptography */
 
 #ifdef __cplusplus
-template <typename T> struct SLOWARR_CXXT {};
+template <typename T>
+struct SLOWARR_CXXT
+{
+};
 
-#define SLOWARR_CXX_HEADER(T)                                                  \
-  template <> struct SLOWARR_CXXT<T> {                                         \
-    SLOWARR_MANGLE(T) arr;                                                     \
-                                                                               \
-    T *begin() { return arr.data; }                                            \
-    T *cbegin() const { return arr.data; }                                     \
-    T *cend() const { return arr.data + arr.len; }                             \
-    T *end() { return cend(); }                                                \
-    SLOWARR_SZT length() const { return arr.len; }                             \
+#define SLOWARR_CXX_HEADER(T)    \
+  template <>                    \
+  struct SLOWARR_CXXT<T>         \
+  {                              \
+    SLOWARR_MANGLE(T) arr;       \
+                                 \
+    T* begin()                   \
+    {                            \
+      return arr.data;           \
+    }                            \
+    T* cbegin() const            \
+    {                            \
+      return arr.data;           \
+    }                            \
+    T* cend() const              \
+    {                            \
+      return arr.data + arr.len; \
+    }                            \
+    T* end()                     \
+    {                            \
+      return cend();             \
+    }                            \
+    SLOWARR_SZT length() const   \
+    {                            \
+      return arr.len;            \
+    }                            \
   };
 #else
 #define SLOWARR_CXX_HEADER(T) /**/
@@ -110,9 +130,10 @@ static void SLOWARR___REQUIRE_SEMI(void) {}
 #define SLOWARR_Header(T)                                                      \
   SLOWARR_BEGINC                                                               \
   /** usage: T(Arr,int) myarr = {0}; */                                        \
-  typedef struct {                                                             \
+  typedef struct                                                               \
+  {                                                                            \
     SLOWARR_SZT cap, len;                                                      \
-    T *data;                                                                   \
+    T* data;                                                                   \
     unsigned char attr;                                                        \
   } SLOWARR_MANGLE(T);                                                         \
   SLOWARR_ENDC                                                                 \
@@ -135,7 +156,7 @@ static void SLOWARR___REQUIRE_SEMI(void) {}
   SLOWARR_FUNC void SLOWARR_MANGLE_F(T, reserveTotal)(SLOWARR_MANGLE(T) * arr, \
                                                       SLOWARR_SZT num);        \
                                                                                \
-  SLOWARR_FUNC T *SLOWARR_MANGLE_F(T, pushRef)(SLOWARR_MANGLE(T) * arr);       \
+  SLOWARR_FUNC T* SLOWARR_MANGLE_F(T, pushRef)(SLOWARR_MANGLE(T) * arr);       \
                                                                                \
   SLOWARR_FUNC void SLOWARR_MANGLE_F(T, push)(SLOWARR_MANGLE(T) * arr, T val); \
                                                                                \
@@ -154,7 +175,8 @@ static void SLOWARR___REQUIRE_SEMI(void) {}
                                                                                \
   /** result can not be reallocated */                                         \
   SLOWARR_FUNC SLOWARR_MANGLE(T)                                               \
-      SLOWARR_MANGLE_F(T, borrow)(T * data, SLOWARR_SZT sz) {                  \
+      SLOWARR_MANGLE_F(T, borrow)(T * data, SLOWARR_SZT sz)                    \
+  {                                                                            \
     SLOWARR_MANGLE(T) arr;                                                     \
     arr.data = data;                                                           \
     arr.cap = sz;                                                              \
@@ -163,18 +185,19 @@ static void SLOWARR___REQUIRE_SEMI(void) {}
     return arr;                                                                \
   }                                                                            \
                                                                                \
-  SLOWARR_FUNC void SLOWARR_MANGLE_F(T,                                        \
-                                     unsafeClear)(SLOWARR_MANGLE(T) * arr) {   \
+  SLOWARR_FUNC void SLOWARR_MANGLE_F(T, unsafeClear)(SLOWARR_MANGLE(T) * arr)  \
+  {                                                                            \
     if (arr->data)                                                             \
       SLOWARR_FREE(arr->data, arr->cap);                                       \
-    arr->data = (T *)(void *)0;                                                \
+    arr->data = (T*)(void*)0;                                                  \
     arr->cap = 0;                                                              \
     arr->len = 0;                                                              \
     /* don't change attrs */                                                   \
   }                                                                            \
                                                                                \
   /* TODO: could make this align the cap num for better perf */                \
-  SLOWARR_FUNC void SLOWARR_MANGLE_F(T, shrink)(SLOWARR_MANGLE(T) * arr) {     \
+  SLOWARR_FUNC void SLOWARR_MANGLE_F(T, shrink)(SLOWARR_MANGLE(T) * arr)       \
+  {                                                                            \
     if (arr->attr & SLOWARR__BORROWED)                                         \
       return;                                                                  \
                                                                                \
@@ -183,15 +206,15 @@ static void SLOWARR___REQUIRE_SEMI(void) {}
     if (arr->attr & SLOWARR__ZEROIZE)                                          \
       SLOWARR_MEMZERO(arr->data + arr->len,                                    \
                       (arr->cap - arr->len) * sizeof(T));                      \
-    arr->data = (T *)SLOWARR_REALLOC(arr->data, arr->cap * sizeof(T),          \
-                                     arr->len * sizeof(T));                    \
+    arr->data = (T*)SLOWARR_REALLOC(arr->data, arr->cap * sizeof(T),           \
+                                    arr->len * sizeof(T));                     \
     arr->cap = arr->len;                                                       \
   }                                                                            \
                                                                                \
   SLOWARR_FUNC void SLOWARR_MANGLE_F(T, reserveTotal)(SLOWARR_MANGLE(T) * arr, \
-                                                      SLOWARR_SZT num) {       \
-                                                                               \
-    void *n;                                                                   \
+                                                      SLOWARR_SZT num)         \
+  {                                                                            \
+    void* n;                                                                   \
     if (num <= arr->cap)                                                       \
       return;                                                                  \
     SLOWARR_ASSERT_USER_ERROR(!(arr->attr & SLOWARR__BORROWED));               \
@@ -202,27 +225,29 @@ static void SLOWARR___REQUIRE_SEMI(void) {}
       SLOWARR_FREE(arr->data, arr->cap * sizeof(T));                           \
       SLOWARR_ON_MALLOC_FAIL(sizeof(T) * num);                                 \
     }                                                                          \
-    arr->data = (T *)n;                                                        \
+    arr->data = (T*)n;                                                         \
     arr->cap = num;                                                            \
   }                                                                            \
                                                                                \
-  SLOWARR_FUNC T *SLOWARR_MANGLE_F(T, pushRef)(SLOWARR_MANGLE(T) * arr) {      \
+  SLOWARR_FUNC T* SLOWARR_MANGLE_F(T, pushRef)(SLOWARR_MANGLE(T) * arr)        \
+  {                                                                            \
     if (arr->cap == 0) {                                                       \
       SLOWARR_MANGLE_F(T, reserveTotal)(arr, SLOWARR_CAP_FOR_FIRST_ELEM(T));   \
     } else if (arr->len + 1 > arr->cap) {                                      \
-      SLOWARR_MANGLE_F(T, reserveTotal)(arr,                                   \
-                                        SLOWARR_GROWTH_RATE(T, arr->len));     \
+      SLOWARR_MANGLE_F(T, reserveTotal)                                        \
+      (arr, SLOWARR_GROWTH_RATE(T, arr->len));                                 \
     }                                                                          \
     return &arr->data[arr->len++];                                             \
   }                                                                            \
                                                                                \
-  SLOWARR_FUNC void SLOWARR_MANGLE_F(T, push)(SLOWARR_MANGLE(T) * arr,         \
-                                              T val) {                         \
+  SLOWARR_FUNC void SLOWARR_MANGLE_F(T, push)(SLOWARR_MANGLE(T) * arr, T val)  \
+  {                                                                            \
     *SLOWARR_MANGLE_F(T, pushRef)(arr) = val;                                  \
   }                                                                            \
                                                                                \
   SLOWARR_FUNC void SLOWARR_MANGLE_F(T, remove)(SLOWARR_MANGLE(T) * arr,       \
-                                                T * out, SLOWARR_SZT i) {      \
+                                                T * out, SLOWARR_SZT i)        \
+  {                                                                            \
     SLOWARR_SZT too_much;                                                      \
     SLOWARR_ASSERT_USER_ERROR(i < arr->len);                                   \
     *out = arr->data[i];                                                       \
@@ -235,7 +260,8 @@ static void SLOWARR___REQUIRE_SEMI(void) {}
     }                                                                          \
   }                                                                            \
                                                                                \
-  SLOWARR_FUNC T SLOWARR_MANGLE_F(T, pop)(SLOWARR_MANGLE(T) * arr) {           \
+  SLOWARR_FUNC T SLOWARR_MANGLE_F(T, pop)(SLOWARR_MANGLE(T) * arr)             \
+  {                                                                            \
     T temp;                                                                    \
     SLOWARR_MANGLE_F(T, remove)(arr, &temp, arr->len - 1);                     \
     return temp;                                                               \

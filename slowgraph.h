@@ -20,46 +20,52 @@ typedef struct SlowGraphNode SlowGraphNode;
 typedef struct SlowGraphEdge SlowGraphEdge;
 typedef struct SlowGraphAttr SlowGraphAttr;
 
-struct SlowGraphAttr {
-  SlowGraphAttr *next;
+struct SlowGraphAttr
+{
+  SlowGraphAttr* next;
   unsigned hash;
   char *key, *val;
 };
 
-struct SlowGraphNode {
-  SlowGraphNode *next;
+struct SlowGraphNode
+{
+  SlowGraphNode* next;
 
   unsigned name_hash;
-  char *name;
-  SlowGraphAttr *attr;
-  SlowGraphEdge *children;
+  char* name;
+  SlowGraphAttr* attr;
+  SlowGraphEdge* children;
 
   unsigned gc_used : 1;
 };
 
-struct SlowGraphEdge {
-  SlowGraphEdge *next;
-  SlowGraphAttr *attr;
+struct SlowGraphEdge
+{
+  SlowGraphEdge* next;
+  SlowGraphAttr* attr;
 
-  SlowGraphNode *node;
+  SlowGraphNode* node;
 };
 
-struct SlowGraph {
-  SlowGraphNode *first;
+struct SlowGraph
+{
+  SlowGraphNode* first;
 };
 
-SLOWGRAPH_FUNC void SlowGraphAttr_free(SlowGraphAttr *attrs);
+SLOWGRAPH_FUNC void SlowGraphAttr_free(SlowGraphAttr* attrs);
 
-SLOWGRAPH_FUNC unsigned slowgraph_hash(char const *buf);
+SLOWGRAPH_FUNC unsigned slowgraph_hash(char const* buf);
 
-SLOWGRAPH_FUNC unsigned slowgraph_hashn(void const *bufp, int len);
+SLOWGRAPH_FUNC unsigned slowgraph_hashn(void const* bufp, int len);
 
-SLOWGRAPH_FUNC char *
-slowgraph_next_edge(FILE *inp, char *buf, int bufn,
-                    void (*opt_attr_clbk)(char *node, char *key, char *val),
-                    void (*opt_last_edge_attr_clbk)(char *key, char *val));
+SLOWGRAPH_FUNC char* slowgraph_next_edge(
+    FILE* inp,
+    char* buf,
+    int bufn,
+    void (*opt_attr_clbk)(char* node, char* key, char* val),
+    void (*opt_last_edge_attr_clbk)(char* key, char* val));
 
-SLOWGRAPH_FUNC SlowGraphAttr *SlowGraphAttr_find(SlowGraphAttr *a,
+SLOWGRAPH_FUNC SlowGraphAttr* SlowGraphAttr_find(SlowGraphAttr* a,
                                                  unsigned hash);
 
 /*
@@ -70,30 +76,32 @@ SLOWGRAPH_FUNC SlowGraphAttr *SlowGraphAttr_find(SlowGraphAttr *a,
  Step 3: call SlowGraph_gcUnused(graph)   // only deletes nodes not used by
  manually marked used nodes
  */
-SLOWGRAPH_FUNC void SlowGraph_markAllUnused(SlowGraph *graph);
-SLOWGRAPH_FUNC void SlowGraph_gcUnused(SlowGraph *graph);
+SLOWGRAPH_FUNC void SlowGraph_markAllUnused(SlowGraph* graph);
+SLOWGRAPH_FUNC void SlowGraph_gcUnused(SlowGraph* graph);
 
-SLOWGRAPH_FUNC SlowGraphNode *SlowGraph_find(SlowGraph *g, unsigned name_hash);
+SLOWGRAPH_FUNC SlowGraphNode* SlowGraph_find(SlowGraph* g, unsigned name_hash);
 
-SLOWGRAPH_FUNC SlowGraphEdge *SlowGraphNode_findConnection(SlowGraphNode *from,
-                                                           SlowGraphNode *to);
+SLOWGRAPH_FUNC SlowGraphEdge* SlowGraphNode_findConnection(SlowGraphNode* from,
+                                                           SlowGraphNode* to);
 
 /* if edge from->to already exists, return it instead */
-SLOWGRAPH_FUNC SlowGraphEdge *SlowGraphNode_connect(SlowGraphNode *from,
-                                                    SlowGraphNode *to);
+SLOWGRAPH_FUNC SlowGraphEdge* SlowGraphNode_connect(SlowGraphNode* from,
+                                                    SlowGraphNode* to);
 
-SLOWGRAPH_FUNC SlowGraphNode *SlowGraph_getOrCreate(SlowGraph *g,
-                                                    char const *name);
+SLOWGRAPH_FUNC SlowGraphNode* SlowGraph_getOrCreate(SlowGraph* g,
+                                                    char const* name);
 
-SLOWGRAPH_FUNC void slowgraph_setAttr(SlowGraphAttr **list, char const *key,
-                                      char const *val);
+SLOWGRAPH_FUNC void slowgraph_setAttr(SlowGraphAttr** list,
+                                      char const* key,
+                                      char const* val);
 
 /* returns 1 on failure */
-SLOWGRAPH_FUNC int SlowGraph_readDGTXT(SlowGraph *g, FILE *f);
+SLOWGRAPH_FUNC int SlowGraph_readDGTXT(SlowGraph* g, FILE* f);
 
 #ifdef SLOWGRAPH_IMPL
-SLOWGRAPH_FUNC void SlowGraphAttr_free(SlowGraphAttr *attrs) {
-  SlowGraphAttr *to_free;
+SLOWGRAPH_FUNC void SlowGraphAttr_free(SlowGraphAttr* attrs)
+{
+  SlowGraphAttr* to_free;
   for (; attrs;) {
     to_free = attrs;
     attrs = attrs->next;
@@ -103,7 +111,8 @@ SLOWGRAPH_FUNC void SlowGraphAttr_free(SlowGraphAttr *attrs) {
   }
 }
 
-SLOWGRAPH_FUNC unsigned slowgraph_hash(char const *buf) {
+SLOWGRAPH_FUNC unsigned slowgraph_hash(char const* buf)
+{
   unsigned res = 5381;
   for (; *buf; buf++) {
     res = (res << 5) + res + *buf;
@@ -111,19 +120,23 @@ SLOWGRAPH_FUNC unsigned slowgraph_hash(char const *buf) {
   return res;
 }
 
-SLOWGRAPH_FUNC unsigned slowgraph_hashn(void const *bufp, int len) {
-  char const *buf = (char const *)bufp;
+SLOWGRAPH_FUNC unsigned slowgraph_hashn(void const* bufp, int len)
+{
+  char const* buf = (char const*)bufp;
   unsigned res = 5381;
-  for (; buf != ((char const *)bufp) + len; buf++) {
+  for (; buf != ((char const*)bufp) + len; buf++) {
     res = (res << 5) + res + *buf;
   }
   return res;
 }
 
-SLOWGRAPH_FUNC char *
-slowgraph_next_edge(FILE *inp, char *buf, int bufn,
-                    void (*opt_attr_clbk)(char *node, char *key, char *val),
-                    void (*opt_last_edge_attr_clbk)(char *key, char *val)) {
+SLOWGRAPH_FUNC char* slowgraph_next_edge(
+    FILE* inp,
+    char* buf,
+    int bufn,
+    void (*opt_attr_clbk)(char* node, char* key, char* val),
+    void (*opt_last_edge_attr_clbk)(char* key, char* val))
+{
   int c;
   char *n, *k, *v, *retv = 0;
 
@@ -188,21 +201,24 @@ slowgraph_next_edge(FILE *inp, char *buf, int bufn,
   return retv;
 }
 
-SLOWGRAPH_FUNC SlowGraphAttr *SlowGraphAttr_find(SlowGraphAttr *a,
-                                                 unsigned hash) {
+SLOWGRAPH_FUNC SlowGraphAttr* SlowGraphAttr_find(SlowGraphAttr* a,
+                                                 unsigned hash)
+{
   for (; a; a = a->next)
     if (a->hash == hash)
       return a;
   return 0;
 }
 
-SLOWGRAPH_FUNC void SlowGraph_markAllUnused(SlowGraph *graph) {
-  SlowGraphNode *n;
+SLOWGRAPH_FUNC void SlowGraph_markAllUnused(SlowGraph* graph)
+{
+  SlowGraphNode* n;
   for (n = graph->first; n; n = n->next)
     n->gc_used = 0;
 }
 
-SLOWGRAPH_FUNC void SlowGraph_gcUnused(SlowGraph *graph) {
+SLOWGRAPH_FUNC void SlowGraph_gcUnused(SlowGraph* graph)
+{
   int changed = 0;
   SlowGraphNode *n, *o, **prev;
   SlowGraphEdge *e, *oe;
@@ -244,29 +260,32 @@ SLOWGRAPH_FUNC void SlowGraph_gcUnused(SlowGraph *graph) {
   }
 }
 
-SLOWGRAPH_FUNC SlowGraphNode *SlowGraph_find(SlowGraph *g, unsigned name_hash) {
-  SlowGraphNode *n;
+SLOWGRAPH_FUNC SlowGraphNode* SlowGraph_find(SlowGraph* g, unsigned name_hash)
+{
+  SlowGraphNode* n;
   for (n = g->first; n; n = n->next)
     if (n->name_hash == name_hash)
       return n;
   return 0;
 }
 
-SLOWGRAPH_FUNC SlowGraphEdge *SlowGraphNode_findConnection(SlowGraphNode *from,
-                                                           SlowGraphNode *to) {
-  SlowGraphEdge *e;
+SLOWGRAPH_FUNC SlowGraphEdge* SlowGraphNode_findConnection(SlowGraphNode* from,
+                                                           SlowGraphNode* to)
+{
+  SlowGraphEdge* e;
   for (e = from->children; e; e = e->next)
     if (e->node == to)
       return e;
   return 0;
 }
 
-SLOWGRAPH_FUNC SlowGraphEdge *SlowGraphNode_connect(SlowGraphNode *from,
-                                                    SlowGraphNode *to) {
-  SlowGraphEdge *e = SlowGraphNode_findConnection(from, to);
+SLOWGRAPH_FUNC SlowGraphEdge* SlowGraphNode_connect(SlowGraphNode* from,
+                                                    SlowGraphNode* to)
+{
+  SlowGraphEdge* e = SlowGraphNode_findConnection(from, to);
   if (e)
     return e;
-  e = (SlowGraphEdge *)calloc(1, sizeof(SlowGraphEdge));
+  e = (SlowGraphEdge*)calloc(1, sizeof(SlowGraphEdge));
   if (!e)
     return 0;
   e->node = to;
@@ -275,19 +294,20 @@ SLOWGRAPH_FUNC SlowGraphEdge *SlowGraphNode_connect(SlowGraphNode *from,
   return e;
 }
 
-SLOWGRAPH_FUNC SlowGraphNode *SlowGraph_getOrCreate(SlowGraph *g,
-                                                    char const *name) {
+SLOWGRAPH_FUNC SlowGraphNode* SlowGraph_getOrCreate(SlowGraph* g,
+                                                    char const* name)
+{
   unsigned hash, strln;
-  SlowGraphNode *n;
+  SlowGraphNode* n;
 
   strln = strlen(name);
   hash = slowgraph_hashn(name, strln);
   if ((n = SlowGraph_find(g, hash)))
     return n;
-  n = (SlowGraphNode *)calloc(1, sizeof(SlowGraphNode));
+  n = (SlowGraphNode*)calloc(1, sizeof(SlowGraphNode));
   if (!n)
     return 0;
-  n->name = (char *)calloc(strln + 1, sizeof(char));
+  n->name = (char*)calloc(strln + 1, sizeof(char));
   if (!n->name) {
     free(n);
     return 0;
@@ -299,49 +319,54 @@ SLOWGRAPH_FUNC SlowGraphNode *SlowGraph_getOrCreate(SlowGraph *g,
   return n;
 }
 
-SLOWGRAPH_FUNC void slowgraph_setAttr(SlowGraphAttr **list, char const *key,
-                                      char const *val) {
+SLOWGRAPH_FUNC void slowgraph_setAttr(SlowGraphAttr** list,
+                                      char const* key,
+                                      char const* val)
+{
   /* TODO: malloc fail handking */
   unsigned keylen = strlen(key);
   unsigned vallen = strlen(val);
   unsigned hash = slowgraph_hashn(key, keylen);
-  SlowGraphAttr *a = SlowGraphAttr_find(*list, hash);
+  SlowGraphAttr* a = SlowGraphAttr_find(*list, hash);
   if (a) {
     free(a->val);
   } else {
-    a = (SlowGraphAttr *)calloc(1, sizeof(SlowGraphAttr));
+    a = (SlowGraphAttr*)calloc(1, sizeof(SlowGraphAttr));
     a->next = *list;
     *list = a;
 
     a->hash = hash;
-    a->key = (char *)calloc(keylen + 1, sizeof(char));
+    a->key = (char*)calloc(keylen + 1, sizeof(char));
     strcpy(a->key, key);
   }
 
-  a->val = (char *)calloc(vallen + 1, sizeof(char));
+  a->val = (char*)calloc(vallen + 1, sizeof(char));
   strcpy(a->val, val);
 }
 
-static SlowGraph *SlowGraph_read__graph;
-static SlowGraphEdge *SlowGraph_read__lastEdge;
+static SlowGraph* SlowGraph_read__graph;
+static SlowGraphEdge* SlowGraph_read__lastEdge;
 
-static void SlowGraph_read__nodeAttr(char *node, char *key, char *val) {
-  SlowGraphNode *n = SlowGraph_getOrCreate(SlowGraph_read__graph, node);
+static void SlowGraph_read__nodeAttr(char* node, char* key, char* val)
+{
+  SlowGraphNode* n = SlowGraph_getOrCreate(SlowGraph_read__graph, node);
   if (!n)
     return;
   slowgraph_setAttr(&n->attr, key, val);
 }
 
-static void SlowGraph_read__edgeAttr(char *key, char *val) {
+static void SlowGraph_read__edgeAttr(char* key, char* val)
+{
   if (!SlowGraph_read__lastEdge)
     return;
   slowgraph_setAttr(&SlowGraph_read__lastEdge->attr, key, val);
 }
 
 /* returns 1 on failure */
-SLOWGRAPH_FUNC int SlowGraph_readDGTXT(SlowGraph *g, FILE *f) {
+SLOWGRAPH_FUNC int SlowGraph_readDGTXT(SlowGraph* g, FILE* f)
+{
   static char buf[512];
-  char *dest;
+  char* dest;
 
   SlowGraph_read__graph = g;
   SlowGraph_read__lastEdge = 0;
@@ -349,7 +374,6 @@ SLOWGRAPH_FUNC int SlowGraph_readDGTXT(SlowGraph *g, FILE *f) {
   while ((dest = slowgraph_next_edge(f, buf, SLOWGRAPH_LENOF(buf),
                                      SlowGraph_read__nodeAttr,
                                      SlowGraph_read__edgeAttr))) {
-
     SlowGraph_read__lastEdge = SlowGraphNode_connect(
         SlowGraph_getOrCreate(g, buf), SlowGraph_getOrCreate(g, dest));
     if (!SlowGraph_read__lastEdge)
