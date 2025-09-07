@@ -20,7 +20,7 @@
  * - SLOWCRYPT_CHACHA20_IMPL
  * - SLOWCRYPT_CHACHA20_FUNC
  *     will be used in front of every function definition / declaration
- * - SLOWCRYPT_CHACHA20_UINT32
+ * - uint32_t
  *     if this is not set, will include <stdint.h>, and use `uint32_t`
  *
  *
@@ -90,10 +90,7 @@
 extern "C" {
 #endif
 
-#ifndef SLOWCRYPT_CHACHA20_UINT32
 #include <stdint.h>
-#define SLOWCRYPT_CHACHA20_UINT32 uint32_t
-#endif
 
 #ifndef SLOWCRYPT_CHACHA20_FUNC
 #define SLOWCRYPT_CHACHA20_FUNC /**/
@@ -101,7 +98,7 @@ extern "C" {
 
 typedef struct
 {
-  SLOWCRYPT_CHACHA20_UINT32 state[16];
+  uint32_t state[16];
 } slowcrypt_chacha20;
 
 /*
@@ -111,46 +108,36 @@ typedef struct
  */
 SLOWCRYPT_CHACHA20_FUNC void slowcrypt_chacha20_block(
     slowcrypt_chacha20 state[2],
-    char const key[32],
-    SLOWCRYPT_CHACHA20_UINT32 block_ctr,
-    char const nonce[12],
-    char data[64]);
+    uint8_t const key[32],
+    uint32_t block_ctr,
+    uint8_t const nonce[12],
+    uint8_t data[64]);
 
 /* call this to zero out memory */
 SLOWCRYPT_CHACHA20_FUNC void slowcrypt_chacha20_deinit(
     slowcrypt_chacha20* state);
 
-SLOWCRYPT_CHACHA20_FUNC void slowcrypt_chacha20_init(
-    slowcrypt_chacha20* state,
-    char const key[32],
-    SLOWCRYPT_CHACHA20_UINT32 block_ctr,
-    char const nonce[12]);
+SLOWCRYPT_CHACHA20_FUNC void slowcrypt_chacha20_init(slowcrypt_chacha20* state,
+                                                     uint8_t const key[32],
+                                                     uint32_t block_ctr,
+                                                     uint8_t const nonce[12]);
 
 SLOWCRYPT_CHACHA20_FUNC void slowcrypt_chacha20_serialize(
-    char buf[64],
+    uint8_t buf[64],
     slowcrypt_chacha20 const* state);
 
 SLOWCRYPT_CHACHA20_FUNC void slowcrypt_chacha20_serialize_xor(
-    char buf[64],
+    uint8_t buf[64],
     slowcrypt_chacha20 const* state);
 
 SLOWCRYPT_CHACHA20_FUNC void slowcrypt_chacha20_run(slowcrypt_chacha20* state,
                                                     slowcrypt_chacha20* swap,
                                                     int num_rounds);
 
-SLOWCRYPT_CHACHA20_FUNC SLOWCRYPT_CHACHA20_UINT32
-slowcrypt_chacha20_read_ul32(char const* buf);
+#define SLOWCRYPT_CHACHA20_LAST32(n, bits) (((uint32_t)(n)) >> (32 - (bits)))
 
-SLOWCRYPT_CHACHA20_FUNC void slowcrypt_chacha20_write_ul32(
-    char* buf,
-    SLOWCRYPT_CHACHA20_UINT32 val);
-
-#define SLOWCRYPT_CHACHA20_LAST32(n, bits) \
-  (((SLOWCRYPT_CHACHA20_UINT32)(n)) >> (32 - (bits)))
-
-#define SLOWCRYPT_CHACHA20_ROL32(n, by)         \
-  ((((SLOWCRYPT_CHACHA20_UINT32)(n)) << (by)) | \
-   SLOWCRYPT_CHACHA20_LAST32((n), (by)))
+#define SLOWCRYPT_CHACHA20_ROL32(n, by) \
+  ((((uint32_t)(n)) << (by)) | SLOWCRYPT_CHACHA20_LAST32((n), (by)))
 
 #define SLOWCRYPT_CHACHA20_QROUND(state, a, b, c, d)   \
   do {                                                 \
@@ -181,20 +168,16 @@ SLOWCRYPT_CHACHA20_FUNC void slowcrypt_chacha20_deinit(
     *(volatile int*)&state->state[i] = 0;
 }
 
-SLOWCRYPT_CHACHA20_FUNC SLOWCRYPT_CHACHA20_UINT32
-slowcrypt_chacha20_read_ul32(char const* buf)
+static uint32_t slowcrypt_chacha20_read_ul32(uint8_t const* buf)
 {
-  SLOWCRYPT_CHACHA20_UINT32 o =
-      (SLOWCRYPT_CHACHA20_UINT32)((uint8_t const*)buf)[0];
-  o |= (SLOWCRYPT_CHACHA20_UINT32)((uint8_t const*)buf)[1] << 8;
-  o |= (SLOWCRYPT_CHACHA20_UINT32)((uint8_t const*)buf)[2] << 16;
-  o |= (SLOWCRYPT_CHACHA20_UINT32)((uint8_t const*)buf)[3] << 24;
+  uint32_t o = (uint32_t)((uint8_t const*)buf)[0];
+  o |= (uint32_t)((uint8_t const*)buf)[1] << 8;
+  o |= (uint32_t)((uint8_t const*)buf)[2] << 16;
+  o |= (uint32_t)((uint8_t const*)buf)[3] << 24;
   return o;
 }
 
-SLOWCRYPT_CHACHA20_FUNC void slowcrypt_chacha20_write_ul32(
-    char* buf,
-    SLOWCRYPT_CHACHA20_UINT32 val)
+static void slowcrypt_chacha20_write_ul32(uint8_t* buf, uint32_t val)
 {
   ((uint8_t*)buf)[0] = (uint8_t)(val & 0xFF);
   ((uint8_t*)buf)[1] = (uint8_t)((val >> 8) & 0xFF);
@@ -202,11 +185,10 @@ SLOWCRYPT_CHACHA20_FUNC void slowcrypt_chacha20_write_ul32(
   ((uint8_t*)buf)[3] = (uint8_t)((val >> 24) & 0xFF);
 }
 
-SLOWCRYPT_CHACHA20_FUNC void slowcrypt_chacha20_init(
-    slowcrypt_chacha20* state,
-    char const key[32],
-    SLOWCRYPT_CHACHA20_UINT32 block_ctr,
-    char const nonce[12])
+SLOWCRYPT_CHACHA20_FUNC void slowcrypt_chacha20_init(slowcrypt_chacha20* state,
+                                                     uint8_t const key[32],
+                                                     uint32_t block_ctr,
+                                                     uint8_t const nonce[12])
 {
   int i;
 
@@ -225,7 +207,7 @@ SLOWCRYPT_CHACHA20_FUNC void slowcrypt_chacha20_init(
 }
 
 SLOWCRYPT_CHACHA20_FUNC void slowcrypt_chacha20_serialize(
-    char buf[64],
+    uint8_t buf[64],
     slowcrypt_chacha20 const* state)
 {
   int i;
@@ -234,10 +216,10 @@ SLOWCRYPT_CHACHA20_FUNC void slowcrypt_chacha20_serialize(
 }
 
 SLOWCRYPT_CHACHA20_FUNC void slowcrypt_chacha20_serialize_xor(
-    char buf[64],
+    uint8_t buf[64],
     slowcrypt_chacha20 const* state)
 {
-  char swp[4];
+  uint8_t swp[4];
   int i, j;
 
   for (i = 0; i < 16; i++) {
@@ -245,6 +227,9 @@ SLOWCRYPT_CHACHA20_FUNC void slowcrypt_chacha20_serialize_xor(
     for (j = 0; j < 4; j++)
       buf[i * 4 + j] ^= swp[j];
   }
+
+  for (i = 0; i < 4; i++)
+    swp[i] = 0;
 }
 
 SLOWCRYPT_CHACHA20_FUNC void slowcrypt_chacha20_run(slowcrypt_chacha20* state,
@@ -278,10 +263,10 @@ SLOWCRYPT_CHACHA20_FUNC void slowcrypt_chacha20_run(slowcrypt_chacha20* state,
 
 SLOWCRYPT_CHACHA20_FUNC void slowcrypt_chacha20_block(
     slowcrypt_chacha20 state[2],
-    char const key[32],
-    SLOWCRYPT_CHACHA20_UINT32 block_ctr,
-    char const nonce[12],
-    char data[64])
+    uint8_t const key[32],
+    uint32_t block_ctr,
+    uint8_t const nonce[12],
+    uint8_t data[64])
 {
   slowcrypt_chacha20_init(state, key, block_ctr, nonce);
   slowcrypt_chacha20_run(state, &state[1], 20);

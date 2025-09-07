@@ -111,6 +111,61 @@ static unsigned long file_read_chunk(FILE* file,
   return n;
 }
 
+static void run_chacha20_core(char** args)
+{
+  static char const help[] =
+      "chacha20-core <key> <counter> <nonce>\n"
+      "\n"
+      "Run the ChaCha20 block function\n";
+  char const *key, *nonce;
+  unsigned int npos = 0;
+  unsigned int nb;
+  unsigned long lu;
+  uint32_t counter;
+  slowcrypt_chacha20 state[2];
+  uint8_t buf[64];
+  uint8_t keyb[32];
+  uint8_t nonceb[12];
+
+  if (!*args) {
+    printf("%s", help);
+    exit(0);
+  }
+
+  for (; *args; args++) {
+    if (anyeq(*args, "-h", "-help", "--help")) {
+      printf("%s", help);
+      exit(0);
+    } else if (npos == 2 && ++npos) {
+      nonce = *args;
+    } else if (npos == 1 && ++npos) {
+      sscanf(*args, "%lu", &lu);
+      counter = lu;
+    } else if (npos == 0 && ++npos) {
+      key = *args;
+    } else {
+      fprintf(stderr, "Unexpected argument: %s\n", *args);
+      exit(1);
+    }
+  }
+
+  if (npos != 3) {
+    fprintf(stderr, "Missing arguments!\n");
+    exit(1);
+  }
+
+  parse_hex2buf(keyb, 32, "key", key);
+  parse_hex2buf(nonceb, 12, "nonce", nonce);
+
+  slowcrypt_chacha20_init(state, keyb, counter, nonceb);
+  slowcrypt_chacha20_run(state, &state[1], 20);
+  slowcrypt_chacha20_serialize(buf, state);
+
+  for (nb = 0; nb < 64; nb++)
+    printf("%02x", buf[nb]);
+  printf("\n");
+}
+
 static void run_poly1305(char** args)
 {
   static char const help[] =
@@ -171,7 +226,11 @@ static void run_poly1305(char** args)
   file_close(fp);
 }
 
-static struct algo bytes2sum[] = {{"poly1305", run_poly1305}, {0, 0}};
+static struct algo bytes2sum[] = {{"poly1305", run_poly1305},
+                                  {"chacha20-core", run_chacha20_core},
+                                  {0, 0}};
+static struct algo bytes2bytes[] = {  //{"chacha20", run_chacha20_crypt},
+    {0, 0}};
 
 int main(int argc, char** argv)
 {
@@ -179,14 +238,23 @@ int main(int argc, char** argv)
   struct algo* a;
 
   if (!*argv || anyeq(*argv, "-h", "-help", "--help")) {
-    printf("bytes -> hash\n");
-    for (a = bytes2sum; a->name; a++) {
+    printf("bytes -> scalar\n");
+    for (a = bytes2sum; a->name; a++)
       printf("  %s\n", a->name);
-    }
+    printf("\nbytes -> bytes\n");
+    for (a = bytes2bytes; a->name; a++)
+      printf("  %s\n", a->name);
     return 0;
   }
 
   for (a = bytes2sum; a->name; a++) {
+    if (!strcmp(a->name, *argv)) {
+      a->run(argv + 1);
+      return 0;
+    }
+  }
+
+  for (a = bytes2bytes; a->name; a++) {
     if (!strcmp(a->name, *argv)) {
       a->run(argv + 1);
       return 0;
