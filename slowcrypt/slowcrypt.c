@@ -166,6 +166,79 @@ static void run_chacha20_core(char** args)
   printf("\n");
 }
 
+static void run_chacha20_crypt(char** args)
+{
+  static char const help[] =
+      "chacha20 [--pad <padding>] [--full-chunks] <key> <nonce> <file>\n"
+      "\n"
+      "Run the ChaCha20 en-/de- cryption algorithm on the given file, or "
+      "stdin, and output the result to stdout\n"
+      "\n"
+      "Defaults to padding with zeros, but can be overwritten with --pad <n>\n"
+      ""
+      "Outputs only the number of input bytes from the last block. This "
+      "behaviour can be changed by passing --full-chunks\n";
+  char const *key, *nonce, *fpath = "-";
+  unsigned int npos = 0;
+  unsigned int nb, i;
+  uint8_t pad = 0;
+  int full_chunks = 0;
+  uint32_t counter;
+  slowcrypt_chacha20 state[2];
+  uint8_t buf[64];
+  uint8_t keyb[32];
+  uint8_t nonceb[12];
+  FILE* fp;
+
+  if (!*args) {
+    printf("%s", help);
+    exit(0);
+  }
+
+  for (; *args; args++) {
+    if (anyeq(*args, "-full-chunk", "--full-chunk", "-full-chunks",
+              "--full-chunks")) {
+      full_chunks = 1;
+    } else if (anyeq(*args, "-pad", "--pad", "--padding") && args[1]) {
+      args++;
+      pad = (uint8_t)atoi(*args);
+    } else if (anyeq(*args, "-h", "-help", "--help")) {
+      printf("%s", help);
+      exit(0);
+    } else if (npos == 2 && ++npos) {
+      fpath = *args;
+    } else if (npos == 1 && ++npos) {
+      nonce = *args;
+    } else if (npos == 0 && ++npos) {
+      key = *args;
+    } else {
+      fprintf(stderr, "Unexpected argument: %s\n", *args);
+      exit(1);
+    }
+  }
+
+  if (npos < 2) {
+    fprintf(stderr, "Missing arguments!\n");
+    exit(1);
+  }
+
+  parse_hex2buf(keyb, 32, "key", key);
+  parse_hex2buf(nonceb, 12, "nonce", nonce);
+
+  fp = file_open(fpath);
+
+  for (counter = 1; (nb = file_read_chunk(fp, buf, 64)); counter++) {
+    for (i = nb; i < 64; i++)
+      buf[i] = pad;
+    slowcrypt_chacha20_block(state, keyb, counter, nonceb, buf);
+    if (full_chunks)
+      nb = 64;
+    fwrite(buf, 1, nb, stdout);
+  }
+
+  file_close(fp);
+}
+
 static void run_poly1305(char** args)
 {
   static char const help[] =
@@ -229,13 +302,13 @@ static void run_poly1305(char** args)
 static struct algo bytes2sum[] = {{"poly1305", run_poly1305},
                                   {"chacha20-core", run_chacha20_core},
                                   {0, 0}};
-static struct algo bytes2bytes[] = {  //{"chacha20", run_chacha20_crypt},
-    {0, 0}};
+static struct algo bytes2bytes[] = {{"chacha20", run_chacha20_crypt}, {0, 0}};
 
 int main(int argc, char** argv)
 {
-  argv++;
   struct algo* a;
+  (void)argc;
+  argv++;
 
   if (!*argv || anyeq(*argv, "-h", "-help", "--help")) {
     printf("bytes -> scalar\n");
