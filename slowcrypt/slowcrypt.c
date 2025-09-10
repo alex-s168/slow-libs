@@ -9,6 +9,9 @@
 #define SLOWCRYPT_POLY1305_IMPL
 #include "../poly1305.h"
 
+#define SLOWCRYPT_SYSTEMRAND_IMPL
+#include "../systemrand.h"
+
 struct algo
 {
   char const* name;
@@ -169,7 +172,8 @@ static void run_chacha20_core(char** args)
 static void run_chacha20_crypt(char** args)
 {
   static char const help[] =
-      "chacha20 [--pad <padding>] [--full-chunks] <key> <nonce> <file>\n"
+      "chacha20 [--pad <padding>] [--init-counter <n>] [--full-chunks] <key> "
+      "<nonce> <file>\n"
       "\n"
       "Run the ChaCha20 en-/de- cryption algorithm on the given file, or "
       "stdin, and output the result to stdout\n"
@@ -181,9 +185,10 @@ static void run_chacha20_crypt(char** args)
   char const *key, *nonce, *fpath = "-";
   unsigned int npos = 0;
   unsigned int nb, i;
+  unsigned long ul;
   uint8_t pad = 0;
   int full_chunks = 0;
-  uint32_t counter;
+  uint32_t counter = 1;
   slowcrypt_chacha20 state[2];
   uint8_t buf[64];
   uint8_t keyb[32];
@@ -202,6 +207,12 @@ static void run_chacha20_crypt(char** args)
     } else if (anyeq(*args, "-pad", "--pad", "--padding") && args[1]) {
       args++;
       pad = (uint8_t)atoi(*args);
+    } else if (anyeq(*args, "-init-counter", "-initial-counter",
+                     "--initial-counter", "--init-counter") &&
+               args[1]) {
+      args++;
+      sscanf(*args, "%lu", &ul);
+      counter = ul;
     } else if (anyeq(*args, "-h", "-help", "--help")) {
       printf("%s", help);
       exit(0);
@@ -227,7 +238,7 @@ static void run_chacha20_crypt(char** args)
 
   fp = file_open(fpath);
 
-  for (counter = 1; (nb = file_read_chunk(fp, buf, 64)); counter++) {
+  for (; (nb = file_read_chunk(fp, buf, 64)); counter++) {
     for (i = nb; i < 64; i++)
       buf[i] = pad;
     slowcrypt_chacha20_block(state, keyb, counter, nonceb, buf);
@@ -237,6 +248,90 @@ static void run_chacha20_crypt(char** args)
   }
 
   file_close(fp);
+}
+
+static void run_chacha20_csprng(char** args)
+{
+  static char const help[] =
+      "chacha20-csprng [--limit <num bytes>] [--init-counter <n>] [--key "
+      "<key>] "
+      "[--nonce <nonce>] \n"
+      "\n"
+      "Run the ChaCha20 function repeatedly, with incrementing counter, "
+      "(starting at the given initial counter, defaulting to 1),"
+      "writing the output to stdout.\n"
+      "\n"
+      "If no limit (in number of bytes) is given, will repeat forever.\n"
+      "\n"
+      "Both key and nonce will be generated randomly (using the highest "
+      "entropy random source available), unless overwritten\n";
+  char const* key = 0;
+  char const* nonce = 0;
+  unsigned long ul;
+  unsigned long limit = 0;
+  unsigned long nb, nwrb;
+  uint32_t counter = 1;
+  slowcrypt_chacha20 state[2];
+  uint8_t buf[64];
+  uint8_t keyb[32];
+  uint8_t nonceb[12];
+
+  for (; *args; args++) {
+    if (anyeq(*args, "-limit", "--limit") && args[1]) {
+      args++;
+      sscanf(*args, "%lu", &ul);
+      limit = ul;
+    } else if (anyeq(*args, "-init-counter", "-initial-counter",
+                     "--initial-counter", "--init-counter") &&
+               args[1]) {
+      args++;
+      sscanf(*args, "%lu", &ul);
+      counter = ul;
+    } else if (anyeq(*args, "-h", "-help", "--help")) {
+      printf("%s", help);
+      exit(0);
+    } else if (anyeq(*args, "-key", "--key")) {
+      args++;
+      key = *args;
+    } else if (anyeq(*args, "-nonce", "--nonce")) {
+      args++;
+      nonce = *args;
+    } else {
+      fprintf(stderr, "Unexpected argument: %s\n", *args);
+      exit(1);
+    }
+  }
+
+  if (key) {
+    parse_hex2buf(keyb, 32, "key", key);
+  } else {
+    slowcrypt_systemrand(keyb, 32, 0);
+  }
+
+  if (nonce) {
+    parse_hex2buf(nonceb, 12, "nonce", nonce);
+  } else {
+    slowcrypt_systemrand(keyb, 12, 0);
+  }
+
+  if (!limit) {
+    for (;; counter++) {
+      slowcrypt_chacha20_init(state, keyb, counter, nonceb);
+      slowcrypt_chacha20_run(state, &state[1], 20);
+      slowcrypt_chacha20_serialize(buf, state);
+      fwrite(buf, 1, 64, stdout);
+    }
+  } else {
+    for (nb = 0; nb < limit; (nb += 64, counter++)) {
+      nwrb = limit - nb;
+      if (nwrb > 64)
+        nwrb = 64;
+      slowcrypt_chacha20_init(state, keyb, counter, nonceb);
+      slowcrypt_chacha20_run(state, &state[1], 20);
+      slowcrypt_chacha20_serialize(buf, state);
+      fwrite(buf, 1, nwrb, stdout);
+    }
+  }
 }
 
 static void run_poly1305(char** args)
@@ -299,10 +394,14 @@ static void run_poly1305(char** args)
   file_close(fp);
 }
 
-static struct algo bytes2sum[] = {{"poly1305", run_poly1305},
-                                  {"chacha20-core", run_chacha20_core},
-                                  {0, 0}};
+static struct algo bytes2scalar[] = {{"poly1305", run_poly1305},
+                                     {"chacha20-core", run_chacha20_core},
+                                     {0, 0}};
+
 static struct algo bytes2bytes[] = {{"chacha20", run_chacha20_crypt}, {0, 0}};
+
+static struct algo scalar2bytes[] = {{"chacha20-csprng", run_chacha20_csprng},
+                                     {0, 0}};
 
 int main(int argc, char** argv)
 {
@@ -312,15 +411,18 @@ int main(int argc, char** argv)
 
   if (!*argv || anyeq(*argv, "-h", "-help", "--help")) {
     printf("bytes -> scalar\n");
-    for (a = bytes2sum; a->name; a++)
+    for (a = bytes2scalar; a->name; a++)
       printf("  %s\n", a->name);
     printf("\nbytes -> bytes\n");
     for (a = bytes2bytes; a->name; a++)
       printf("  %s\n", a->name);
+    printf("\nscalar -> bytes\n");
+    for (a = scalar2bytes; a->name; a++)
+      printf("  %s\n", a->name);
     return 0;
   }
 
-  for (a = bytes2sum; a->name; a++) {
+  for (a = bytes2scalar; a->name; a++) {
     if (!strcmp(a->name, *argv)) {
       a->run(argv + 1);
       return 0;
@@ -328,6 +430,13 @@ int main(int argc, char** argv)
   }
 
   for (a = bytes2bytes; a->name; a++) {
+    if (!strcmp(a->name, *argv)) {
+      a->run(argv + 1);
+      return 0;
+    }
+  }
+
+  for (a = scalar2bytes; a->name; a++) {
     if (!strcmp(a->name, *argv)) {
       a->run(argv + 1);
       return 0;
