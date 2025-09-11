@@ -1,3 +1,4 @@
+#include <ctype.h>
 #define SLOWGRAPH_IMPL
 #include "../slowgraph.h"
 
@@ -58,10 +59,20 @@ static void dump_adj_matrix(SlowGraph* g)
 int main(int argc, char** argv)
 {
   SlowGraph graph = {0};
+  int ch, csv_inp;
 
-  if (SlowGraph_readDGTXT(&graph, stdin))
-    return 1;
+  for (; (ch = fgetc(stdin)) && isspace(ch);)
+    ;
+  csv_inp = ch == ',';
+  ungetc(ch, stdin);
 
-  dump_adj_matrix(&graph);
+  if (csv_inp) {
+  } else {
+    if (SlowGraph_readDGTXT(&graph, stdin))
+      return 1;
+
+    dump_adj_matrix(&graph);
+  }
+
   return 0;
 }
