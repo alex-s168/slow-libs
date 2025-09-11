@@ -2,6 +2,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <time.h>
 
 #define SLOWCRYPT_CHACHA20_IMPL
 #include "../chacha20.h"
@@ -112,6 +113,37 @@ static unsigned long file_read_chunk(FILE* file,
     exit(1);
   }
   return n;
+}
+
+static void parse_rng_args(unsigned long* oLimit,
+                           char** oSeed,
+                           char const* rngName,
+                           char const* description,
+                           char** args)
+{
+  static char const help[] =
+      "%s [--limit <num bytes>] [--seed] [seed]\n\nWhen a seed is given, the "
+      "given seed will be used INSTEAD of the system rng!\n\n%s";
+  int npos = 0;
+
+  *oLimit = 0;
+  *oSeed = 0;
+
+  for (; *args; args++) {
+    if (anyeq(*args, "-h", "--h", "-help", "--help")) {
+      printf(help, rngName, description);
+      exit(0);
+    } else if (anyeq(*args, "-limit", "--limit", "-n")) {
+      args++;
+      sscanf(*args, "%lu", oLimit);
+    } else if (anyeq(*args, "-seed", "--seed")) {
+    } else if (npos == 0 && ++npos) {
+      *oSeed = *args;
+    } else {
+      fprintf(stderr, "Unexpected argument: %s\n", *args);
+      exit(1);
+    }
+  }
 }
 
 static void run_chacha20_core(char** args)
@@ -250,10 +282,11 @@ static void run_chacha20_crypt(char** args)
   file_close(fp);
 }
 
-static void run_chacha20_csprng(char** args)
+static void run_chacha20_csprng_manual(char** args)
 {
   static char const help[] =
-      "chacha20-csprng [--limit <num bytes>] [--init-counter <n>] [--key "
+      "chacha20-csprng-manual [--limit <num bytes>] [--init-counter <n>] "
+      "[--key "
       "<key>] "
       "[--nonce <nonce>] \n"
       "\n"
@@ -332,6 +365,9 @@ static void run_chacha20_csprng(char** args)
       fwrite(buf, 1, nwrb, stdout);
     }
   }
+
+  slowcrypt_chacha20_deinit(&state[0]);
+  slowcrypt_chacha20_deinit(&state[1]);
 }
 
 static void run_poly1305(char** args)
@@ -394,21 +430,129 @@ static void run_poly1305(char** args)
   file_close(fp);
 }
 
+static void distribute(uint8_t* out,
+                       unsigned int outlen,
+                       uint8_t const* in,
+                       unsigned int inlen)
+{
+  unsigned oidx, iidx;
+  fprintf(stderr, "seeding RNGs not yet implemented!\n");
+  exit(1);
+  /* TODO */
+}
+
+static void run_chacha20_csprng(char** args)
+{
+  unsigned long limit, nb, nwrb, seedlen;
+  char* seed;
+  char const description[] =
+      "Run the ChaCha20 function repeatedly with incrementing counters, to "
+      "produce random data\n";
+  uint8_t keynonceb[44];
+  unsigned long counter = 1;
+  slowcrypt_chacha20 state[2];
+  uint8_t buf[64];
+
+  parse_rng_args(&limit, &seed, "chacha20-csprng", description, args);
+  if (seed) {
+    seedlen = strlen(seed);
+    distribute(keynonceb, 44, (uint8_t const*)seed, seedlen);
+  } else {
+    slowcrypt_systemrand(keynonceb, 44, 0);
+  }
+
+  if (!limit) {
+    for (;; counter++) {
+      slowcrypt_chacha20_init(state, &keynonceb[0], counter, &keynonceb[32]);
+      slowcrypt_chacha20_run(state, &state[1], 20);
+      slowcrypt_chacha20_serialize(buf, state);
+      fwrite(buf, 1, 64, stdout);
+    }
+  } else {
+    for (nb = 0; nb < limit; (nb += 64, counter++)) {
+      nwrb = limit - nb;
+      if (nwrb > 64)
+        nwrb = 64;
+      slowcrypt_chacha20_init(state, &keynonceb[0], counter, &keynonceb[32]);
+      slowcrypt_chacha20_run(state, &state[1], 20);
+      slowcrypt_chacha20_serialize(buf, state);
+      fwrite(buf, 1, nwrb, stdout);
+    }
+  }
+
+  slowcrypt_chacha20_deinit(&state[0]);
+  slowcrypt_chacha20_deinit(&state[1]);
+}
+
+static void run_entropy(char** args)
+{
+  static char const help[] =
+      "entropy [--limit <num bytes>] [--bail-if-insecure] "
+      "[--insecure-non-blocking]\n\nUses the operating system's RNG to "
+      "produce high-entropy random data\n";
+
+  unsigned int limit = 0;
+  unsigned int nb, nwrb;
+  static uint8_t buf[256];
+  slowcrypt_systemrand_flags flags = 0;
+
+  for (; *args; args++) {
+    if (anyeq(*args, "-h", "--h", "-help", "--help")) {
+      printf("%s", help);
+      exit(0);
+    } else if (anyeq(*args, "-limit", "--limit", "-n")) {
+      args++;
+      sscanf(*args, "%lu", &limit);
+    } else if (anyeq(*args, "-bail-if-insecure", "--bail-if-insecure")) {
+      flags |= SLOWCRYPT_SYSTEMRAND__BAIL_IF_INSECURE;
+    } else if (anyeq(*args, "-insecure-non-blocking",
+                     "--insecure-non-blocking")) {
+      flags |= SLOWCRYPT_SYSTEMRAND__INSECURE_NON_BLOCKING;
+    } else {
+      fprintf(stderr, "Unexpected argument: %s\n", *args);
+      exit(1);
+    }
+  }
+
+  if (!limit) {
+    for (;;) {
+      if (slowcrypt_systemrand(buf, 256, flags))
+        exit(1);
+      fwrite(buf, 1, 256, stdout);
+    }
+  } else {
+    for (nb = 0; nb < limit; nb += 256) {
+      nwrb = limit - nb;
+      if (nwrb > 256)
+        nwrb = 256;
+      if (slowcrypt_systemrand(buf, nwrb, flags))
+        exit(1);
+      fwrite(buf, 1, nwrb, stdout);
+    }
+  }
+}
+
 static struct algo bytes2scalar[] = {{"poly1305", run_poly1305},
                                      {"chacha20-core", run_chacha20_core},
                                      {0, 0}};
 
 static struct algo bytes2bytes[] = {{"chacha20", run_chacha20_crypt}, {0, 0}};
 
-static struct algo scalar2bytes[] = {{"chacha20-csprng", run_chacha20_csprng},
-                                     {0, 0}};
+static struct algo scalar2bytes[] = {
+    {"entropy", run_entropy},
+    {"chacha20-csprng", run_chacha20_csprng},
+    {"chacha20-csprng-manual", run_chacha20_csprng_manual},
+    {0, 0}};
 
 int main(int argc, char** argv)
 {
   struct algo* a;
   (void)argc;
-  argv++;
 
+  /* used by systemrand if no better rng available */
+  srand((unsigned int)time(0));
+
+  argv++;
   if (!*argv || anyeq(*argv, "-h", "-help", "--help")) {
     printf("bytes -> scalar\n");
     for (a = bytes2scalar; a->name; a++)
