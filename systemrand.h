@@ -17,8 +17,8 @@
  * - getrandom()
  * - unless _WIN32 is defined, read from /dev/random or /dev/urandom
  * - on _WIN32, try BCryptGenRandom
- * - on _WIN32, CryptGenRandom
- * - on _WIN32, RtlGenRandom
+ * - on _WIN32, try RtlGenRandom
+ * - on _WIN32, try CryptGenRandom
  * - random(), unless bail on insecure
  * - rand(), unless bail on insecure
  *
@@ -83,9 +83,18 @@ SLOWCRYPT_SYSTEMRAND_FUNC int slowcrypt_systemrand(
 #include <unistd.h>
 #endif
 
+#ifdef _WIN32
+#include <windows.h>
+#endif
+
 #ifdef SLOWCRYPT_SYSTEMRAND_UNDEF_GNU_SOURCE
 #undef SLOWCRYPT_SYSTEMRAND_UNDEF_GNU_SOURCE
 #undef _GNU_SOURCE
+#endif
+
+#ifdef _WIN32
+static HMODULE slowcrypt_systemrand__hmod_advapi = 0;
+static HMODULE slowcrypt_systemrand__hmod_bcrypt = 0;
 #endif
 
 static int slowcrypt_systemrand__chunk256(void* buffer,
@@ -96,6 +105,11 @@ static int slowcrypt_systemrand__chunk256(void* buffer,
   unsigned char u8;
   char const* fpath;
   FILE* fp;
+#ifdef _WIN32
+  FARPROC proc;
+  NTSTATUS status;
+  WINBOOL wbool;
+#endif
 
 #if defined(unix) && defined(__GLIBC__) && \
     (__GLIBC__ > 2 || (__GLIBC__ == 2 && __GLIBC_MINOR__ >= 25))
@@ -124,7 +138,52 @@ static int slowcrypt_systemrand__chunk256(void* buffer,
   }
 #endif
 
-  /* TODO: windows stuff */
+#ifdef _WIN32
+  if (!slowcrypt_systemrand__hmod_bcrypt)
+    slowcrypt_systemrand__hmod_bcrypt = LoadLibraryA("bcrypt.dll");
+  if (slowcrypt_systemrand__hmod_bcrypt &&
+      slowcrypt_systemrand__hmod_bcrypt != INVALID_HANDLE_VALUE) {
+    if ((proc = GetProcAddress(slowcrypt_systemrand__hmod_bcrypt,
+                               "BCryptGenRandom"))) {
+      status =
+          ((NTSTATUS WINAPI(*)(BCRYPT_ALG_HANDLE hAlgorithm, PUCHAR pbBuffer,
+                               ULONG cbBuffer, ULONG dwFlags))proc)(
+              0, (PUCHAR)buffer, (ULONG)length,
+              0x2 /* BCRYPT_USE_SYSTEM_PREFERRED_RNG */
+          );
+      if (status == 0) {
+        return 0;
+      }
+    }
+  }
+#endif
+
+#ifdef _WIN32
+  if (!slowcrypt_systemrand__hmod_advapi)
+    slowcrypt_systemrand__hmod_advapi = LoadLibraryA("advapi32.dll");
+  if (slowcrypt_systemrand__hmod_advapi &&
+      slowcrypt_systemrand__hmod_advapi != INVALID_HANDLE_VALUE) {
+    if ((proc = GetProcAddress(slowcrypt_systemrand__hmod_advapi,
+                               "SystemFunction036"))) {
+      if (((BOOLEAN WINAPI(*)(PVOID, ULONG))proc)((PVOID)buffer,
+                                                  (ULONG)length) == 0) {
+        return 0;
+      }
+    }
+  }
+#endif
+
+#ifdef _WIN32
+  HCRYPTPROV hProv = 0;
+  if (CryptAcquireContext(&hProv, NULL, NULL, PROV_RSA_FULL,
+                          CRYPT_VERIFYCONTEXT)) {
+    WINBOOL result = CryptGenRandom(hProv, (DWORD)length, (BYTE*)buffer);
+    CryptReleaseContext(hProv, 0);
+    if (result) {
+      return 0;
+    }
+  }
+#endif
 
   if (flags & SLOWCRYPT_SYSTEMRAND__BAIL_IF_INSECURE)
     return 2;
@@ -156,7 +215,7 @@ SLOWCRYPT_SYSTEMRAND_FUNC int slowcrypt_systemrand(
     slowcrypt_systemrand_flags flags)
 {
   unsigned int i, j;
-  int rc;
+  int rc = 0;
 
   /* many random sources have a limit of 256 bytes */
   for (i = 0; i < length; i += 256) {
@@ -164,10 +223,18 @@ SLOWCRYPT_SYSTEMRAND_FUNC int slowcrypt_systemrand(
     if (j > 256)
       j = 256;
     if ((rc = slowcrypt_systemrand__chunk256(buffer, length, flags))) {
-      return rc;
+      break;
     }
   }
-  return 0;
+
+#ifdef _WIN32
+  if (slowcrypt_systemrand__hmod_advapi)
+    FreeLibrary(slowcrypt_systemrand__hmod_advapi);
+  if (slowcrypt_systemrand__hmod_bcrypt)
+    FreeLibrary(slowcrypt_systemrand__hmod_bcrypt);
+#endif
+
+  return rc;
 }
 
 #endif
