@@ -17,10 +17,13 @@ Each library is documentated at the top of each header file
 - `./slowarr.h`: C templated dynamic array
 - `./slowgraph.h`: WIP graph library (this is the only library that is actually slow)
 
+there are more files than that, but those are heavility wip
+
 
 ## CLI Tools
 CLI utils built with slow-libs.
 
+- `./slowcrypt/slowcrypt.c`: cryptography cli
 - `./slowgraph/sgraph-adj.c`: dgtxt graphs <-> adjacency matrix
 
 
