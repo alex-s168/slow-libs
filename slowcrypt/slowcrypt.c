@@ -484,6 +484,56 @@ static void run_chacha20_csprng(char** args)
   slowcrypt_chacha20_deinit(&state[1]);
 }
 
+static uint16_t prng_step(uint16_t x)
+{
+  x ^= x << 1;
+  x ^= x >> 1;
+  x ^= x << 3;  // 5 shifts, cycle of 32767
+  return x;
+}
+
+static void prng_buf(uint16_t* buf, unsigned long buflen, uint16_t* acc)
+{
+  for (; buflen; --buflen, ++buf) {
+    *acc = prng_step(*acc);
+    *buf = *acc;
+  }
+}
+
+static void run_prng(char** args)
+{
+  unsigned long limit, nb, nwrb, seedlen;
+  char* seed;
+  char const description[] =
+      "Run a weak implementationd-dependent (non cryptographically secure) "
+      "PRNG\n";
+  uint16_t acc;
+  uint16_t buf[32];
+
+  parse_rng_args(&limit, &seed, "prng", description, args);
+  if (seed) {
+    seedlen = strlen(seed);
+    distribute((uint8_t*)&acc, sizeof(acc), (uint8_t const*)seed, seedlen);
+  } else {
+    slowcrypt_systemrand((uint8_t*)&acc, sizeof(acc), 0);
+  }
+
+  if (!limit) {
+    for (;;) {
+      prng_buf(buf, 32, &acc);
+      fwrite(buf, 1, 64, stdout);
+    }
+  } else {
+    for (nb = 0; nb < limit; nb += 64) {
+      nwrb = limit - nb;
+      if (nwrb > 64)
+        nwrb = 64;
+      prng_buf(buf, 32, &acc);
+      fwrite(buf, 1, nwrb, stdout);
+    }
+  }
+}
+
 static void run_entropy(char** args)
 {
   static char const help[] =
@@ -491,7 +541,7 @@ static void run_entropy(char** args)
       "[--insecure-non-blocking]\n\nUses the operating system's RNG to "
       "produce high-entropy random data\n";
 
-  unsigned int limit = 0;
+  unsigned long limit = 0;
   unsigned int nb, nwrb;
   static uint8_t buf[256];
   slowcrypt_systemrand_flags flags = 0;
@@ -542,6 +592,7 @@ static struct algo scalar2bytes[] = {
     {"entropy", run_entropy},
     {"chacha20-csprng", run_chacha20_csprng},
     {"chacha20-csprng-manual", run_chacha20_csprng_manual},
+    {"prng", run_prng},
     {0, 0}};
 
 int main(int argc, char** argv)
