@@ -13,9 +13,11 @@ Each library is documentated at the top of each header file
 
 
 ## Libraries
-- `./chacha20.h`
-- `./slowarr.h`: C templated dynamic array
-- `./slowgraph.h`: WIP graph library (this is the only library that is actually slow)
+- `./include/slowlibs/chacha20.h`
+- `./include/slowlibs/slowarr.h`: C templated dynamic array
+- `./include/slowlibs/slowgraph.h`: WIP graph library (this is the only library that is actually slow)
+- `./include/slowlibs/csv.h`
+- `./include/slowlibs/systemrand.h`
 
 there are more files than that, but those are heavility wip
 

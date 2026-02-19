@@ -1,0 +1,44 @@
+project('slowlibs', 'c', 'cpp',
+  version: '1.0.0-pre.1')
+
+install_headers(
+  './include/slowlibs/chacha20.h',
+  './include/slowlibs/csv.h',
+  './include/slowlibs/poly1305.h',
+  './include/slowlibs/slowarr.h',
+  './include/slowlibs/slowgraph.h',
+  './include/slowlibs/systemrand.h',
+  subdir: 'slowlibs')
+
+slowlibs_headeronly_dep = declare_dependency(
+  include_directories: 'include')
+meson.override_dependency('slowlibs-headeronly', slowlibs_headeronly_dep)
+
+
+executable('slowcrypt',
+  './slowcrypt/slowcrypt.c',
+  dependencies: [slowlibs_headeronly_dep],
+  install: true)
+
+executable('sgraph-adj',
+  './slowgraph/sgraph-adj.c',
+  dependencies: [slowlibs_headeronly_dep],
+  install: true)
+
+
+
+test('chacha20-nostd.0', executable('chacha20-nostd.0',
+  './tests/chacha20/nostd0.c',
+  dependencies: [slowlibs_headeronly_dep]))
+
+test('slowarr-nostd.1', executable('slowarr-nostd.1',
+  './tests/slowarr/nostd1.c',
+  dependencies: [slowlibs_headeronly_dep]))
+
+test('slowarr-std.1', executable('slowarr-std.1',
+  './tests/slowarr/std1.c',
+  dependencies: [slowlibs_headeronly_dep]))
+
+test('slowarr-std.1-cxx', executable('slowarr-std.1-cxx',
+  './tests/slowarr/std1.cxx',
+  dependencies: [slowlibs_headeronly_dep]))

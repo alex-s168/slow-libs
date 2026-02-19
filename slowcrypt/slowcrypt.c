@@ -5,13 +5,13 @@
 #include <time.h>
 
 #define SLOWCRYPT_CHACHA20_IMPL
-#include "../chacha20.h"
+#include "slowlibs/chacha20.h"
 
 #define SLOWCRYPT_POLY1305_IMPL
-#include "../poly1305.h"
+#include "slowlibs/poly1305.h"
 
 #define SLOWCRYPT_SYSTEMRAND_IMPL
-#include "../systemrand.h"
+#include "slowlibs/systemrand.h"
 
 struct algo
 {

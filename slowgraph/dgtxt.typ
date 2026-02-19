@@ -57,8 +57,8 @@ grammar = { spaces, element, spaces };
 ```
 # comment line (ignored)
 DownloadLinux FlashDrive
-# double hashtass start node attributes:
-## DownloadLinux describtion Attrbiute key/value formats are not standardized her
+# double hash starts node attributes:
+## DownloadLinux describtion Attrbiute key/value formats are not standardized here
 FindFlashDrive    FlashDrive   #: cost 200
                                #: another-attr-key  another attr value (until end of line)
 DownloadDriveFlashSoftware FlashDrive

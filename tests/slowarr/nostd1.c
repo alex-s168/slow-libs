@@ -28,7 +28,7 @@ void c_memmove(void* destp, void* srcp, unsigned len)
 #define SLOWARR_FREE(ptr, size)   /**/
 #define SLOWARR_ON_MALLOC_FAIL(x) /**/
 #define SLOW_DEFINE_ACCESS
-#include "../slowarr.h"
+#include "slowlibs/slowarr.h"
 
 typedef char const* cstr;
 SLOWARR_Header(cstr);

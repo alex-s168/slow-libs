@@ -1,5 +1,5 @@
 #define SLOWCRYPT_CHACHA20_IMPL
-#include "../chacha20.h"
+#include "slowlibs/chacha20.h"
 
 static char key[] = {
     0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08, 0x09, 0x0a,
@@ -47,7 +47,8 @@ int main(int argc, char** argv)
       buf[j] = text[i + j];
     }
 
-    slowcrypt_chacha20_block(state, key, ctr, nonce, buf);
+    slowcrypt_chacha20_block(state, (void const*)key, ctr, (void const*)nonce,
+                             (void*)buf);
     ctr++;
 
     for (j = 0; j < blksz; j++)

@@ -13,8 +13,6 @@
 #include <stdlib.h>
 #include <string.h>
 
-#define SLOWGRAPH_LENOF(x) (sizeof((x)) / sizeof(*(x)))
-
 typedef struct SlowGraph SlowGraph;
 typedef struct SlowGraphNode SlowGraphNode;
 typedef struct SlowGraphEdge SlowGraphEdge;
@@ -58,12 +56,14 @@ SLOWGRAPH_FUNC unsigned slowgraph_hash(char const* buf);
 
 SLOWGRAPH_FUNC unsigned slowgraph_hashn(void const* bufp, int len);
 
-SLOWGRAPH_FUNC char* slowgraph_next_edge(
+SLOWGRAPH_FUNC char* slowgraph_DGTXT_next_edge(
     FILE* inp,
     char* buf,
     int bufn,
-    void (*opt_attr_clbk)(char* node, char* key, char* val),
-    void (*opt_last_edge_attr_clbk)(char* key, char* val));
+    void* a,
+    void* b,
+    void (*opt_attr_clbk)(void* a, char* node, char* key, char* val),
+    void (*opt_last_edge_attr_clbk)(void* b, char* key, char* val));
 
 SLOWGRAPH_FUNC SlowGraphAttr* SlowGraphAttr_find(SlowGraphAttr* a,
                                                  unsigned hash);
@@ -96,7 +96,10 @@ SLOWGRAPH_FUNC void slowgraph_setAttr(SlowGraphAttr** list,
                                       char const* val);
 
 /* returns 1 on failure */
-SLOWGRAPH_FUNC int SlowGraph_readDGTXT(SlowGraph* g, FILE* f);
+SLOWGRAPH_FUNC int SlowGraph_readDGTXT(SlowGraph* g,
+                                       char* buf,
+                                       size_t buflen,
+                                       FILE* f);
 
 #ifdef SLOWGRAPH_IMPL
 SLOWGRAPH_FUNC void SlowGraphAttr_free(SlowGraphAttr* attrs)
@@ -130,12 +133,16 @@ SLOWGRAPH_FUNC unsigned slowgraph_hashn(void const* bufp, int len)
   return res;
 }
 
-SLOWGRAPH_FUNC char* slowgraph_next_edge(
+// TODO: use custom strtok_r
+
+SLOWGRAPH_FUNC char* slowgraph_DGTXT_next_edge(
     FILE* inp,
     char* buf,
     int bufn,
-    void (*opt_attr_clbk)(char* node, char* key, char* val),
-    void (*opt_last_edge_attr_clbk)(char* key, char* val))
+    void* a,
+    void* b,
+    void (*opt_attr_clbk)(void* a, char* node, char* key, char* val),
+    void (*opt_last_edge_attr_clbk)(void* b, char* key, char* val))
 {
   int c;
   char *n, *k, *v, *retv = 0;
@@ -157,12 +164,13 @@ SLOWGRAPH_FUNC char* slowgraph_next_edge(
         n = strtok(buf + 1, " \r\n");
         k = strtok(0, " \r\n");
         v = strtok(0, " \r\n");
-        opt_attr_clbk(n, k, v);
+        opt_attr_clbk(a, n, k, v);
       } else if (c == ':' && opt_last_edge_attr_clbk &&
                  buf == fgets(buf, bufn, inp)) {
+        c = fgetc(inp);
         k = strtok(buf + 1, " \r\n");
         v = strtok(0, " \r\n");
-        opt_last_edge_attr_clbk(k, v);
+        opt_last_edge_attr_clbk(b, k, v);
       } else {
         for (; c != EOF && c != '\n'; c = fgetc(inp))
           ;
@@ -344,44 +352,44 @@ SLOWGRAPH_FUNC void slowgraph_setAttr(SlowGraphAttr** list,
   strcpy(a->val, val);
 }
 
-static SlowGraph* SlowGraph_read__graph;
-static SlowGraphEdge* SlowGraph_read__lastEdge;
-
-static void SlowGraph_read__nodeAttr(char* node, char* key, char* val)
+static void SlowGraph_read__nodeAttr(void* arg,
+                                     char* node,
+                                     char* key,
+                                     char* val)
 {
-  SlowGraphNode* n = SlowGraph_getOrCreate(SlowGraph_read__graph, node);
+  SlowGraph* graph = arg;
+  SlowGraphNode* n = SlowGraph_getOrCreate(graph, node);
   if (!n)
     return;
   slowgraph_setAttr(&n->attr, key, val);
 }
 
-static void SlowGraph_read__edgeAttr(char* key, char* val)
+static void SlowGraph_read__edgeAttr(void* arg, char* key, char* val)
 {
-  if (!SlowGraph_read__lastEdge)
+  SlowGraphEdge* edge = arg;
+  if (!edge)
     return;
-  slowgraph_setAttr(&SlowGraph_read__lastEdge->attr, key, val);
+  slowgraph_setAttr(&edge->attr, key, val);
 }
 
 /* returns 1 on failure */
-SLOWGRAPH_FUNC int SlowGraph_readDGTXT(SlowGraph* g, FILE* f)
+SLOWGRAPH_FUNC int SlowGraph_readDGTXT(SlowGraph* g,
+                                       char* buf,
+                                       size_t buflen,
+                                       FILE* f)
 {
-  static char buf[512];
   char* dest;
 
-  SlowGraph_read__graph = g;
-  SlowGraph_read__lastEdge = 0;
+  SlowGraphEdge* lastEdge = 0;
 
-  while ((dest = slowgraph_next_edge(f, buf, SLOWGRAPH_LENOF(buf),
-                                     SlowGraph_read__nodeAttr,
-                                     SlowGraph_read__edgeAttr))) {
-    SlowGraph_read__lastEdge = SlowGraphNode_connect(
-        SlowGraph_getOrCreate(g, buf), SlowGraph_getOrCreate(g, dest));
-    if (!SlowGraph_read__lastEdge)
+  while ((dest = slowgraph_DGTXT_next_edge(f, buf, buflen, g, lastEdge,
+                                           SlowGraph_read__nodeAttr,
+                                           SlowGraph_read__edgeAttr))) {
+    lastEdge = SlowGraphNode_connect(SlowGraph_getOrCreate(g, buf),
+                                     SlowGraph_getOrCreate(g, dest));
+    if (!lastEdge)
       return 1;
   }
-
-  SlowGraph_read__graph = 0;
-  SlowGraph_read__lastEdge = 0;
 
   return 0;
 }

@@ -1,5 +1,5 @@
 #define SLOW_DEFINE_ACCESS
-#include "../slowarr.h"
+#include "slowlibs/slowarr.h"
 
 typedef char const* cstr;
 SLOWARR_Header(cstr);
