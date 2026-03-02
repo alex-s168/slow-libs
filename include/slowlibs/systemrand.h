@@ -3,7 +3,7 @@
  * 0BSD licensed, see below documentation
  *
  * Latest version can be found at:
- * https://gitea.vxcc.dev/alexander.nutz/slow-libs
+ * https://git.vxcc.dev/alexander.nutz/slow-libs
  *
  * ======== High-entropy system RNG =========
  *

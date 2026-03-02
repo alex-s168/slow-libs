@@ -16,14 +16,25 @@ slowlibs_headeronly_dep = declare_dependency(
   include_directories: 'include')
 meson.override_dependency('slowlibs-headeronly', slowlibs_headeronly_dep)
 
+libslowlibs = static_library('slowlibs',
+  'src/io.c',
+  'src/include_impl.c',
+  install: true,
+  dependencies: [slowlibs_headeronly_dep])
+
+slowlibs_dep = declare_dependency(
+  include_directories: 'include',
+  link_with: libslowlibs)
+meson.override_dependency('slowlibs', slowlibs_dep)
+
 
 executable('slowcrypt',
-  './slowcrypt/slowcrypt.c',
+  './src/slowcrypt/cli-slowcrypt.c',
   dependencies: [slowlibs_headeronly_dep],
   install: true)
 
 executable('sgraph-adj',
-  './slowgraph/sgraph-adj.c',
+  './src/slowgraph/cli-sgraph-adj.c',
   dependencies: [slowlibs_headeronly_dep],
   install: true)
 
