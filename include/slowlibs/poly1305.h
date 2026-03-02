@@ -64,16 +64,21 @@
 #endif
 #endif
 
+#include "util.h"
+
 #ifndef SLOWCRYPT_POLY1305_DONT_USE_BITINT
-#include <limits.h>
-#ifdef BITINT_MAXWIDTH
-#if BITINT_MAXWIDTH >= 264
+#ifdef SLOWLIBS_BITINT_MAXWIDTH
+#if SLOWLIBS_BITINT_MAXWIDTH >= 264
 #define SLOWCRYPT_POLY1305_USE_BITINT
 #endif
-#elif defined(__BITINT_MAXWIDTH__)
-#if __BITINT_MAXWIDTH__ >= 264
-#define SLOWCRYPT_POLY1305_USE_BITINT
 #endif
+#endif
+
+#ifndef slowcrypt_timing_sensitive
+#ifdef SLOWCRYPT_ALLOW_TIMING_ATTACKS
+#define slowcrypt_timing_sensitive /**/
+#else
+#define slowcrypt_timing_sensitive slowlibs_O0
 #endif
 #endif
 
@@ -121,9 +126,10 @@ SLOWCRYPT_POLY1305_FUNC void slowcrypt_poly1305_finish(slowcrypt_poly1305* p,
 
 #ifdef SLOWCRYPT_POLY1305_USE_BITINT
 
-static unsigned _BitInt(136) slowcrypt_poly1305_from_le(uint8_t const* buf,
-                                                        unsigned int buf_len,
-                                                        uint8_t top)
+static unsigned _BitInt(136) slowcrypt_timing_sensitive
+    slowcrypt_poly1305_from_le(uint8_t const* buf,
+                               unsigned int buf_len,
+                               uint8_t top)
 {
   unsigned int i;
   unsigned _BitInt(136) out = (unsigned _BitInt(136))top << (buf_len * 8);
@@ -132,8 +138,8 @@ static unsigned _BitInt(136) slowcrypt_poly1305_from_le(uint8_t const* buf,
   return out;
 }
 
-SLOWCRYPT_POLY1305_FUNC void slowcrypt_poly1305_init(slowcrypt_poly1305* p,
-                                                     uint8_t key[32])
+SLOWCRYPT_POLY1305_FUNC void slowcrypt_timing_sensitive
+slowcrypt_poly1305_init(slowcrypt_poly1305* p, uint8_t key[32])
 {
   key[3] &= 0x0f;
   key[4] &= 0xfc;
@@ -147,10 +153,10 @@ SLOWCRYPT_POLY1305_FUNC void slowcrypt_poly1305_init(slowcrypt_poly1305* p,
   p->acc = 0;
 }
 
-SLOWCRYPT_POLY1305_FUNC void slowcrypt_poly1305_next_block(
-    slowcrypt_poly1305* p,
-    uint8_t const* data,
-    unsigned int length)
+SLOWCRYPT_POLY1305_FUNC void slowcrypt_timing_sensitive
+slowcrypt_poly1305_next_block(slowcrypt_poly1305* p,
+                              uint8_t const* data,
+                              unsigned int length)
 {
   if (length == 0)
     return;
@@ -160,8 +166,8 @@ SLOWCRYPT_POLY1305_FUNC void slowcrypt_poly1305_next_block(
   p->acc = p->prod;
 }
 
-SLOWCRYPT_POLY1305_FUNC void slowcrypt_poly1305_finish(slowcrypt_poly1305* p,
-                                                       uint8_t out[16])
+SLOWCRYPT_POLY1305_FUNC void slowcrypt_timing_sensitive
+slowcrypt_poly1305_finish(slowcrypt_poly1305* p, uint8_t out[16])
 {
   unsigned int i;
   p->acc += p->s;
@@ -174,11 +180,11 @@ SLOWCRYPT_POLY1305_FUNC void slowcrypt_poly1305_finish(slowcrypt_poly1305* p,
 
 #else
 
-static void slowcrypt_poly1305_from_le(
-    slowlib_fbig_part outp[slowlib_fbig(136)],
-    uint8_t const* buf,
-    unsigned int buf_len,
-    uint8_t top)
+static void slowcrypt_timing_sensitive
+slowcrypt_poly1305_from_le(slowlib_fbig_part outp[slowlib_fbig(136)],
+                           uint8_t const* buf,
+                           unsigned int buf_len,
+                           uint8_t top)
 {
   unsigned int i;
 
@@ -196,8 +202,8 @@ static void slowcrypt_poly1305_from_le(
   slowlib_fbig_write(outp, out);
 }
 
-SLOWCRYPT_POLY1305_FUNC void slowcrypt_poly1305_init(slowcrypt_poly1305* p,
-                                                     uint8_t key[32])
+SLOWCRYPT_POLY1305_FUNC void slowcrypt_timing_sensitive
+slowcrypt_poly1305_init(slowcrypt_poly1305* p, uint8_t key[32])
 {
   key[3] &= 0x0f;
   key[4] &= 0xfc;
@@ -211,10 +217,10 @@ SLOWCRYPT_POLY1305_FUNC void slowcrypt_poly1305_init(slowcrypt_poly1305* p,
   slowlib_fbig_zext_scalar(p->acc, 0);
 }
 
-SLOWCRYPT_POLY1305_FUNC void slowcrypt_poly1305_next_block(
-    slowcrypt_poly1305* p,
-    uint8_t const* data,
-    unsigned int length)
+SLOWCRYPT_POLY1305_FUNC void slowcrypt_timing_sensitive
+slowcrypt_poly1305_next_block(slowcrypt_poly1305* p,
+                              uint8_t const* data,
+                              unsigned int length)
 {
   if (length == 0)
     return;
@@ -234,8 +240,8 @@ SLOWCRYPT_POLY1305_FUNC void slowcrypt_poly1305_next_block(
   slowlib_fbig_trunc(p->acc, p->prod);
 }
 
-SLOWCRYPT_POLY1305_FUNC void slowcrypt_poly1305_finish(slowcrypt_poly1305* p,
-                                                       uint8_t out[16])
+SLOWCRYPT_POLY1305_FUNC void slowcrypt_timing_sensitive
+slowcrypt_poly1305_finish(slowcrypt_poly1305* p, uint8_t out[16])
 {
   unsigned int i;
   slowlib_fbig_add(p->acc, p->acc, p->s);

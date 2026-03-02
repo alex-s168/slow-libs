@@ -5,6 +5,8 @@ install_headers(
   './include/slowlibs/chacha20.h',
   './include/slowlibs/csv.h',
   './include/slowlibs/poly1305.h',
+  './include/slowlibs/fixed_bigint.h',
+  './include/slowlibs/util.h',
   './include/slowlibs/slowarr.h',
   './include/slowlibs/slowgraph.h',
   './include/slowlibs/systemrand.h',

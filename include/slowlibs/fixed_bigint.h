@@ -51,6 +51,8 @@
 #include <stddef.h>
 #include <stdint.h>
 
+// TODO: there are definitely still some non-constant time algorithms in here, need to review and fix those
+
 // biggest is on the right
 typedef uint32_t slowlib_fbig_part;
 typedef uint64_t slowlib_fbig_double_part;
