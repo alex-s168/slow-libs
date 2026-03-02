@@ -27,8 +27,12 @@ executable('sgraph-adj',
 
 
 
-test('chacha20-nostd.0', executable('chacha20-nostd.0',
-  './tests/chacha20/nostd0.c',
+test('chacha20-block_test_vector', executable('chacha20-block_test_vector',
+  './tests/chacha20/block_test_vector.c',
+  dependencies: [slowlibs_headeronly_dep]))
+
+test('chacha20-keygen_test_vector', executable('chacha20-keygen_test_vector',
+  './tests/chacha20/keygen_test_vector.c',
   dependencies: [slowlibs_headeronly_dep]))
   
 test('poly1305-test_vector_bitint', executable('poly1305-test_vector_bitint',

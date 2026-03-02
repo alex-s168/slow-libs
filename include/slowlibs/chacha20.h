@@ -21,7 +21,7 @@
  * - SLOWCRYPT_CHACHA20_FUNC
  *     will be used in front of every function definition / declaration
  * - uint32_t
- *     if this is not set, will include <stdint.h>, and use `uint32_t`
+ *     if this is not defined, will include <stdint.h>, and use `uint32_t` and `uint8_t`
  *
  *
  * Compatibility:
@@ -135,6 +135,27 @@ SLOWCRYPT_CHACHA20_FUNC void slowcrypt_chacha20_run(slowcrypt_chacha20* state,
                                                     slowcrypt_chacha20* swap,
                                                     int num_rounds);
 
+/*
+ * Arguments:
+ * - `key`:
+*      256-bit session integrity key
+ *
+ * - `nonce` and `nonce_len`:
+ *     This MUST be unique per invocation with the same key, so it MUST NOT be
+ *     randomly generated.  A counter is a good way to implement this,
+ *     but other methods, such as a Linear Feedback Shift Register (LFSR)
+ *     are also acceptable.
+ *     If this is only 8 bytes, 4 zero bytes will be prepended.
+ *
+ * Contracts:
+ * - `nonce_len == 8 || nonce_len == 12`
+ */
+SLOWCRYPT_CHACHA20_FUNC void slowcrypt_chacha20_poly1305_key_gen(
+    uint8_t out[32],
+    uint8_t const key[32],
+    uint8_t const* nonce,
+    int nonce_len);
+
 #define SLOWCRYPT_CHACHA20_LAST32(n, bits) (((uint32_t)(n)) >> (32 - (bits)))
 
 #define SLOWCRYPT_CHACHA20_ROL32(n, by) \
@@ -161,8 +182,8 @@ SLOWCRYPT_CHACHA20_FUNC void slowcrypt_chacha20_run(slowcrypt_chacha20* state,
 
 #ifdef SLOWCRYPT_CHACHA20_IMPL
 
-SLOWCRYPT_CHACHA20_FUNC void slowcrypt_chacha20_deinit(
-    slowcrypt_chacha20* state)
+SLOWCRYPT_CHACHA20_FUNC
+void slowcrypt_chacha20_deinit(slowcrypt_chacha20* state)
 {
   int i;
   for (i = 0; i < 16; i++)
@@ -272,6 +293,41 @@ SLOWCRYPT_CHACHA20_FUNC void slowcrypt_chacha20_block(
   slowcrypt_chacha20_init(state, key, block_ctr, nonce);
   slowcrypt_chacha20_run(state, &state[1], 20);
   slowcrypt_chacha20_serialize_xor(data, state);
+}
+
+SLOWCRYPT_CHACHA20_FUNC void slowcrypt_chacha20_poly1305_key_gen(
+    uint8_t out[32],
+    uint8_t const key[32],
+    uint8_t const* nonce,
+    int nonce_len)
+{
+  int i;
+  uint8_t nonce_buf[12];
+  slowcrypt_chacha20 state, state2;
+
+  if (nonce_len == 8) {
+    /* 64-bit nonce, prepend 4 zero bytes */
+    nonce_buf[0] = 0;
+    nonce_buf[1] = 0;
+    nonce_buf[2] = 0;
+    nonce_buf[3] = 0;
+    for (i = 0; i < 8; i++)
+      nonce_buf[4 + i] = nonce[i];
+    nonce = nonce_buf;
+  } else {
+    for (i = 0; i < 12; i++)
+      nonce_buf[i] = nonce[i];
+    nonce = nonce_buf;
+  }
+
+  slowcrypt_chacha20_init(&state, key, 0, nonce);
+  slowcrypt_chacha20_run(&state, &state2, 20);
+
+  for (i = 0; i < 8; i++)
+    slowcrypt_chacha20_write_ul32(&out[i * 4], state.state[i]);
+
+  slowcrypt_chacha20_deinit(&state);
+  slowcrypt_chacha20_deinit(&state2);
 }
 
 #endif
