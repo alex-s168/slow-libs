@@ -1,5 +1,5 @@
-# slow-libs single-header libraries
-MIT licennced  (see ./LICENSE)
+# slow-libs minimal libraries
+0BSD licennce (see ./LICENSE)
 
 Most libraries are not actually slow, but that is just the naming scheme.
 
