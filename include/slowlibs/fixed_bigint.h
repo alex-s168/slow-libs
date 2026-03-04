@@ -22,6 +22,12 @@
  *     If defined, does not use clearly non-constant time algorithms.
  *     NOTE that this does not guarantee that the implementation is actually constant time, as it depends on the compiler and platform.
  *     Use a non-optimizing compiler to make sure that the implementation is actually constant time. 
+ * - slowlib_fbig_part:
+ *     The type of the individual parts of the big integer. Must be an unsigned integer type.
+ *     The default can NOT be relied on!
+ * - slowlib_fbig_double_part:
+ *     A unsigned integer at least twice as wide as slowlib_fbig_part, used for intermediate values in multiplication and addition.
+ *     The default can NOT be relied on!
  *
  *
  * Compatibility:
@@ -52,10 +58,13 @@
 #include <stdint.h>
 
 // TODO: there are definitely still some non-constant time algorithms in here, need to review and fix those
+// TODO: put some impls into functions
 
+#ifndef slowlib_fbig_part
 // biggest is on the right
 typedef uint32_t slowlib_fbig_part;
 typedef uint64_t slowlib_fbig_double_part;
+#endif
 
 #define slowlib_fbig_const_part_u64(u64) \
   ((uint64_t)(u64) & 0xFFFFFFFF), (((uint64_t)(u64) >> 32) & 0xFFFFFFFF)
@@ -94,6 +103,10 @@ typedef uint64_t slowlib_fbig_double_part;
     slowlib_fbig_static_assertion_##msg _slowlib_fbig_assertion;       \
     (void)_slowlib_fbig_assertion;                                     \
   } while (0)
+
+typedef char slowlib_fbig__static_assertion__part_sizes
+    [(sizeof(slowlib_fbig_double_part) >= 2 * sizeof(slowlib_fbig_part)) ? 1
+                                                                         : -1];
 
 #define slowlib_fbig_zext(out, src)                                            \
   do {                                                                         \

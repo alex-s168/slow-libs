@@ -16,9 +16,16 @@ slowlibs_headeronly_dep = declare_dependency(
   include_directories: 'include')
 meson.override_dependency('slowlibs-headeronly', slowlibs_headeronly_dep)
 
+sha3_gen_rc = custom_target('sha3_gen_rc',
+  command: executable('sha3_gen_rc', 'src/slowcrypt/sha3_gen_rc.c'),
+  capture: true,
+  output: 'sha3_gen_rc.h')
+
 libslowlibs = static_library('slowlibs',
   'src/io.c',
   'src/include_impl.c',
+  'src/slowcrypt/sha3.c',
+  sha3_gen_rc,
   install: true,
   dependencies: [slowlibs_headeronly_dep])
 

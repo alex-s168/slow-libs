@@ -19,4 +19,7 @@
 #define slowlibs_O0 /**/
 #endif
 
+// TODO
+#define slowlibs_ct_select(cond, a, b) ((cond) ? (a) : (b))
+
 #endif

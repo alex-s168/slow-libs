@@ -85,6 +85,10 @@
 #ifndef SLOWCRYPT_CHACHA20_H
 #define SLOWCRYPT_CHACHA20_H
 
+#if defined(SLOWCRYPT_CHACHA20_IMPL) && defined(SLOWCRYPT_STATICALLY_LINKED)
+}}} ERROR ERROR ERROR {{{
+#endif
+
 #ifdef __cplusplus
 extern "C" {
 #endif
