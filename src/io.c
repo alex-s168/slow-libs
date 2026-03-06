@@ -1,4 +1,7 @@
 #include "slowlibs/io.h"
+#include <stdint.h>
+#include <stdlib.h>
+#include <string.h>
 
 slowlibs_io_status slowlibs_io_fixed_buf_writer__write(void* ctxp,
                                                        uint8_t const* data,
@@ -29,6 +32,115 @@ slowlibs_io_status slowlibs_io_fixed_buf_reader__read(size_t* len_out,
   ctx->pos += to_read;
   *len_out = to_read;
   return SLOWLIBS_IO_OK;
+}
+
+typedef struct
+{
+  slowlibs_reader backing;
+  int owned;
+  size_t chunksize;
+
+  size_t cursor;
+  size_t buflen;
+
+  uint8_t buf[];
+} bufreader_state;
+
+slowlibs_io_status buffered_reader_read(size_t* len_out,
+                                        void* ctx,
+                                        uint8_t* buf,
+                                        size_t read_max)
+{
+  bufreader_state* state = ctx;
+
+  /* case 1: still data in buf */
+  if (state->cursor < state->buflen) {
+    size_t const rem = state->buflen - state->cursor;
+    if (read_max > rem)
+      read_max = rem;
+    memcpy(buf, state->buf + state->cursor, read_max);
+    *len_out = read_max;
+    state->cursor += read_max;
+    return SLOWLIBS_IO_OK;
+  }
+
+  /* case 2: read exactly chunk size */
+  if (state->chunksize == read_max)
+    return slowlibs_read(len_out, state->backing, buf, read_max);
+
+  if (read_max > state->chunksize)
+    read_max = state->chunksize;
+
+  /* case 3: need put new data into buffer */
+  *len_out = 0;
+
+  size_t numread;
+  slowlibs_io_status status =
+      slowlibs_read(&numread, state->backing, state->buf, state->chunksize);
+  if (status != SLOWLIBS_IO_OK && status != SLOWLIBS_IO_READ_END &&
+      status != SLOWLIBS_IO_ONLY_CHUNKED)
+    return status;
+
+  state->cursor = 0;
+  state->buflen = numread;
+
+  if (numread > 0) {
+    if (read_max > numread)
+      read_max = numread;
+    memcpy(buf, state->buf, read_max);
+    *len_out = read_max;
+    state->cursor = read_max;
+    return SLOWLIBS_IO_OK;
+  }
+
+  return status;
+}
+
+void buffered_reader_close(void* ctx)
+{
+  bufreader_state* state = ctx;
+  if (state->owned)
+    slowlibs_close(state->backing);
+  free(state);
+}
+
+static int make_buffered_reader(slowlibs_reader* out,
+                                int owned,
+                                slowlibs_reader backing,
+                                size_t buflen)
+{
+  if (!backing.read || !out)
+    return 1;
+
+  bufreader_state* state = malloc(buflen + sizeof(bufreader_state));
+  if (!state)
+    return 1;
+  state->backing = backing;
+  state->owned = owned;
+  state->chunksize = buflen;
+  state->cursor = 0;
+  state->buflen = 0;
+  *out = (slowlibs_reader){
+      .ctx = state,
+      .close = buffered_reader_close,
+      .read = buffered_reader_read,
+      .recommended_chunk_size = buflen,
+  };
+  return 0;
+}
+
+int slowlibs_buffered_reader_borrow(slowlibs_reader* out,
+                                    slowlibs_reader backing,
+                                    size_t buflen)
+{
+  return make_buffered_reader(out, 0, backing, buflen);
+}
+
+int slowlibs_buffered_reader_owned(slowlibs_reader* out,
+                                   slowlibs_reader backing,
+                                   size_t buflen)
+{
+  return make_buffered_reader(out, 1, backing, buflen);
 }
 
 slowlibs_io_status slowlibs_transfer(slowlibs_writer out,

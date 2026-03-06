@@ -39,31 +39,36 @@ executable('sgraph-adj',
   install: true)
 
 
+if not meson.is_subproject()
+  test('chacha20-block_test_vector', executable('chacha20-block_test_vector',
+    './tests/chacha20/block_test_vector.c',
+    dependencies: [slowlibs_headeronly_dep]))
 
-test('chacha20-block_test_vector', executable('chacha20-block_test_vector',
-  './tests/chacha20/block_test_vector.c',
-  dependencies: [slowlibs_headeronly_dep]))
+  test('chacha20-keygen_test_vector', executable('chacha20-keygen_test_vector',
+    './tests/chacha20/keygen_test_vector.c',
+    dependencies: [slowlibs_headeronly_dep]))
+    
+  test('poly1305-test_vector_bitint', executable('poly1305-test_vector_bitint',
+    './tests/poly1305/test_vector_bitint.c',
+    dependencies: [slowlibs_headeronly_dep]))
 
-test('chacha20-keygen_test_vector', executable('chacha20-keygen_test_vector',
-  './tests/chacha20/keygen_test_vector.c',
-  dependencies: [slowlibs_headeronly_dep]))
-  
-test('poly1305-test_vector_bitint', executable('poly1305-test_vector_bitint',
-  './tests/poly1305/test_vector_bitint.c',
-  dependencies: [slowlibs_headeronly_dep]))
+  test('poly1305-test_vector_fbig', executable('poly1305-test_vector_fbig',
+    './tests/poly1305/test_vector_fbig.c',
+    dependencies: [slowlibs_headeronly_dep]))
 
-test('poly1305-test_vector_fbig', executable('poly1305-test_vector_fbig',
-  './tests/poly1305/test_vector_fbig.c',
-  dependencies: [slowlibs_headeronly_dep]))
+  test('slowarr-nostd.1', executable('slowarr-nostd.1',
+    './tests/slowarr/nostd1.c',
+    dependencies: [slowlibs_headeronly_dep]))
 
-test('slowarr-nostd.1', executable('slowarr-nostd.1',
-  './tests/slowarr/nostd1.c',
-  dependencies: [slowlibs_headeronly_dep]))
+  test('slowarr-std.1', executable('slowarr-std.1',
+    './tests/slowarr/std1.c',
+    dependencies: [slowlibs_headeronly_dep]))
 
-test('slowarr-std.1', executable('slowarr-std.1',
-  './tests/slowarr/std1.c',
-  dependencies: [slowlibs_headeronly_dep]))
+  test('slowarr-std.1-cxx', executable('slowarr-std.1-cxx',
+    './tests/slowarr/std1.cxx',
+    dependencies: [slowlibs_headeronly_dep]))
 
-test('slowarr-std.1-cxx', executable('slowarr-std.1-cxx',
-  './tests/slowarr/std1.cxx',
-  dependencies: [slowlibs_headeronly_dep]))
+  test('io-buffered-reader', executable('io-buffered-reader',
+    './tests/io/buffered_reader.c',
+    dependencies: [slowlibs_dep]))
+endif

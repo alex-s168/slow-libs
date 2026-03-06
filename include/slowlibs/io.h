@@ -17,7 +17,7 @@ typedef enum
   SLOWLIBS_IO_READ_END,
   /* try again later, no data processed yet */
   SLOWLIBS_IO_WOULD_BLOCK,
-  /* you can try again right now, some data processed */
+  /* you can try again right now */
   SLOWLIBS_IO_YIELD,
 
   /* ==== bad ==== */
@@ -27,6 +27,8 @@ typedef enum
   SLOWLIBS_IO_INTERNAL_ERROR,
   SLOWLIBS_IO_EXTERNAL_ERROR,
   SLOWLIBS_IO_TIMEOUT,
+  /* can only be read/written like the interface described in chunked_reader/chunked_writer */
+  SLOWLIBS_IO_ONLY_CHUNKED,
 } slowlibs_io_status;
 
 typedef slowlibs_io_status slowlibs_write_fn(void* ctx,
@@ -90,6 +92,32 @@ extern slowlibs_write_fn slowlibs_io_fixed_buf_writer__write;
 extern slowlibs_read_fn slowlibs_io_fixed_buf_reader__read;
 
 /**
+ * All reads from `backing` are made at `buflen`, except for the last read.
+ *
+ * You have to call `slowlibs_close` on the returned reader, to free memory!
+ *
+ * Calling close on this reader will NOT close the backing reader.
+ *
+ * Returns 0 on success, not zero on malloc or other error.
+ */
+int slowlibs_buffered_reader_borrow(slowlibs_reader* out,
+                                    slowlibs_reader backing,
+                                    size_t buflen);
+
+/**
+ * All reads from `backing` are made at `buflen`, except for the last read.
+ *
+ * You have to call `slowlibs_close` on the returned reader, to free memory!
+ *
+ * Calling close on this reader WILL ALSO close the backing reader.
+ *
+ * Returns 0 on success, not zero on malloc or other error.
+ */
+int slowlibs_buffered_reader_owned(slowlibs_reader* out,
+                                   slowlibs_reader backing,
+                                   size_t buflen);
+
+/**
  * Example:
  *   uint8_t buf[100];
  *   slowlibs_buf_cursor ctx = { buf, sizeof(buf) };
@@ -121,6 +149,8 @@ extern slowlibs_read_fn slowlibs_io_fixed_buf_reader__read;
     .read = slowlibs_io_fixed_buf_reader__read,     \
     .recommended_chunk_size = buflen                \
   }
+
+/* ========================= Utils =========================== */
 
 /**
  * Arguments:
