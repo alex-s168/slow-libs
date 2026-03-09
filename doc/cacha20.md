@@ -1,7 +1,10 @@
 # ChaCha20 related
 
 ## HChaCha20
-A fixed-input hash function based on the ChaCha20 permutation.
+A fixed-input hash function (with limitations!) based on the ChaCha20 permutation.
+
+This is identical to HSalsa20, but with the ChaCha20 permutation and IV.
+This is also referred to as the "extended nonce" version of ChaCha20 / Salsa20.
 
 Do not use the following code in production:
 ```rs
