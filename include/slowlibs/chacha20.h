@@ -118,6 +118,17 @@ SLOWCRYPT_CHACHA20_FUNC void slowcrypt_chacha20_block(
     uint8_t const nonce[12],
     uint8_t data[64]);
 
+/*
+ * Run HChaCha20, a (bad) fixed-input hash function (see /doc/cacha20.md)
+ *
+ * does NOT zeroize state! zeroize manually when done.
+ */
+SLOWCRYPT_CHACHA20_FUNC void slowcrypt_hchacha20(
+    slowcrypt_chacha20* state,
+    uint8_t const key[32],
+    uint8_t const nonce[16],
+    uint8_t hash[32]);
+
 /* call this to zero out memory */
 SLOWCRYPT_CHACHA20_FUNC void slowcrypt_chacha20_deinit(
     slowcrypt_chacha20* state);
@@ -135,6 +146,10 @@ SLOWCRYPT_CHACHA20_FUNC void slowcrypt_chacha20_serialize_xor(
     uint8_t buf[64],
     slowcrypt_chacha20 const* state);
 
+SLOWCRYPT_CHACHA20_FUNC void slowcrypt_chacha20_rounds(slowcrypt_chacha20* state,
+                                                       int num_rounds);
+
+/* Runs the rounds, then XORs */
 SLOWCRYPT_CHACHA20_FUNC void slowcrypt_chacha20_run(slowcrypt_chacha20* state,
                                                     slowcrypt_chacha20* swap,
                                                     int num_rounds);
@@ -258,14 +273,10 @@ SLOWCRYPT_CHACHA20_FUNC void slowcrypt_chacha20_serialize_xor(
     swp[i] = 0;
 }
 
-SLOWCRYPT_CHACHA20_FUNC void slowcrypt_chacha20_run(slowcrypt_chacha20* state,
-                                                    slowcrypt_chacha20* swap,
-                                                    int num_rounds)
+SLOWCRYPT_CHACHA20_FUNC void slowcrypt_chacha20_rounds(slowcrypt_chacha20* state,
+                                                       int num_rounds)
 {
   int i;
-
-  for (i = 0; i < 16; i++)
-    swap->state[i] = state->state[i];
 
   for (i = 0; i < num_rounds; i++) {
     if (i % 2 == 0) {
@@ -282,9 +293,49 @@ SLOWCRYPT_CHACHA20_FUNC void slowcrypt_chacha20_run(slowcrypt_chacha20* state,
       SLOWCRYPT_CHACHA20_QROUND(state->state, 3, 4, 9, 14);
     }
   }
+}
+
+SLOWCRYPT_CHACHA20_FUNC void slowcrypt_chacha20_run(slowcrypt_chacha20* state,
+                                                    slowcrypt_chacha20* swap,
+                                                    int num_rounds)
+{
+  int i;
+
+  for (i = 0; i < 16; i++)
+    swap->state[i] = state->state[i];
+
+  slowcrypt_chacha20_rounds(state, num_rounds);
 
   for (i = 0; i < 16; i++)
     state->state[i] += swap->state[i];
+}
+
+SLOWCRYPT_CHACHA20_FUNC void slowcrypt_hchacha20(
+    slowcrypt_chacha20* state,
+    uint8_t const key[32],
+    uint8_t const nonce[16],
+    uint8_t hash[32])
+{
+  int i;
+
+  state->state[0] = 0x61707865;
+  state->state[1] = 0x3320646e;
+  state->state[2] = 0x79622d32;
+  state->state[3] = 0x6b206574;
+
+  for (i = 0; i < 8; i++)
+    state->state[4 + i] = slowcrypt_chacha20_read_ul32(&key[i * 4]);
+
+  for (i = 0; i < 4; i++)
+    state->state[12 + i] = slowcrypt_chacha20_read_ul32(&nonce[i * 4]);
+
+  slowcrypt_chacha20_rounds(state, 20);
+
+  for (i = 0; i < 4; i++)
+    slowcrypt_chacha20_write_ul32(&hash[i * 4], state->state[i]);
+
+  for (i = 0; i < 4; i++)
+    slowcrypt_chacha20_write_ul32(&hash[i * 4 + 16], state->state[i + 12]);
 }
 
 SLOWCRYPT_CHACHA20_FUNC void slowcrypt_chacha20_block(
