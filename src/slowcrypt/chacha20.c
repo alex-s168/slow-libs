@@ -200,7 +200,7 @@ void slowcrypt_kchacha(uint8_t state[32],
   for (i = 8; i < 32; i++)
     state[i] = 0;
 
-  for (; data_len >= 0; data_len -= 32, data += 32) {
+  for (; (int)data_len >= 0; data_len -= 32, data += 32) {
     chunk_len = data_len;
     if (chunk_len > 32)
       chunk_len = 32;
@@ -234,45 +234,4 @@ void slowcrypt_kchacha(uint8_t state[32],
     ((volatile uint8_t*)swap)[i] = 0;
   *(volatile int*)&chunk_len = 0;
   *(volatile int*)&add_trailing_block = 0;
-}
-
-#include <stdlib.h>
-#include <string.h>
-#include "slowlibs/util.h"
-
-int slowcrypt_balloon_kchacha(uint8_t out[32],
-                              uint8_t const protocol_constant[16],
-                              uint8_t const password[],
-                              unsigned password_len,
-                              uint8_t const salt[],
-                              unsigned salt_len,
-                              unsigned buffer_size,
-                              unsigned balloon_rounds,
-                              unsigned kchacha_rounds)
-{
-  uint8_t *buf, *blkbuf;
-  unsigned i;
-
-  buffer_size /= 32;
-  buf = malloc(buffer_size * 32);
-  if (!buf)
-    return 1;
-
-  i = password_len + salt_len + 4 + 64;
-  blkbuf = malloc(i);
-  if (!blkbuf) {
-    free(buf);
-    return 1;
-  }
-
-  if (SLOWLIBS_EN
-  memcpy()
-
-  slowcrypt_kchacha(buf, protocol_constant, blkbuf,
-                    4 + password_len + salt_len, kchacha_rounds);
-
-      for (i = 0; i < 32; i++) out[i] = buf[(buffer_size - 1) * 32 + i];
-  free(buf);
-
-  return 0;
 }

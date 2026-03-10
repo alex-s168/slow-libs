@@ -229,6 +229,83 @@ static void run_kchacha(char** args)
   printf("\n");
 }
 
+static void run_balloon_kchacha(char** args)
+{
+  static char const help[] =
+      "balloon-kchacha [--chacha-rounds N] [--space Bytes] [--balloon-rounds "
+      "N] <protocol-constant>\n"
+      "\n"
+      "Run the balloon-hash function using KChaCha as inner function, with "
+      "system entropy as salt\n"
+      "\n"
+      "Defaults to 20 ChaCha rounds, 1 Balloon round, and 256MiB space.\n"
+      "\n"
+      "Protocol constant is a hex value, that should be unique to each "
+      "aplication,\n"
+      " and NEVER be zero!\n";
+  uint8_t hash[32], salt[32], protocol_constant[16];
+  char const* protocol_constant_hex;
+  int chacha_rounds = 20, balloon_rounds = 1, space = 256 * 1024 * 1024;
+  int npos = 0;
+  int i;
+  uint8_t* input;
+  unsigned long len;
+
+  for (; *args; args++) {
+    if (anyeq(*args, "-h", "-help", "--help")) {
+      printf("%s", help);
+      exit(0);
+    } else if (anyeq(*args, "-balloon-rounds", "--balloon-rounds") && args[1]) {
+      args++;
+      balloon_rounds = atoi(*args);
+    } else if (anyeq(*args, "-chacha-rounds", "--chacha-rounds") && args[1]) {
+      args++;
+      chacha_rounds = atoi(*args);
+    } else if (anyeq(*args, "-s", "-space", "--space") && args[1]) {
+      args++;
+      space = atoi(*args);
+    } else if (npos == 0 && ++npos) {
+      protocol_constant_hex = *args;
+    } else {
+      fprintf(stderr, "Unexpected argument: %s\n", *args);
+      exit(1);
+    }
+  }
+
+  if (npos < 1) {
+    fprintf(stderr, "Missing arguments!\n");
+    exit(1);
+  }
+
+  parse_hex2buf(protocol_constant, 16, "protocol-constant",
+                protocol_constant_hex);
+
+  input = file_read_all(stdin, &len);
+
+  if (slowcrypt_systemrand(salt, sizeof salt,
+                           SLOWCRYPT_SYSTEMRAND__BAIL_IF_INSECURE)) {
+    fprintf(stderr, "slowcrypt_systemrand error\n");
+    exit(1);
+  }
+
+  if (slowcrypt_balloon_kchacha(hash, protocol_constant, input, len, salt,
+                                sizeof salt, space, balloon_rounds,
+                                chacha_rounds)) {
+    fprintf(stderr, "oom\n");
+    exit(1);
+  }
+
+  printf("For salt: ");
+  for (i = 0; i < sizeof salt; i++)
+    printf("%02x", salt[i]);
+  printf("\n");
+
+  printf("Hash: ");
+  for (i = 0; i < 32; i++)
+    printf("%02x", hash[i]);
+  printf("\n");
+}
+
 static void run_chacha20_core(char** args)
 {
   static char const help[] =
@@ -668,6 +745,7 @@ static void run_entropy(char** args)
 static struct algo bytes2scalar[] = {{"poly1305", run_poly1305},
                                      {"chacha20-core", run_chacha20_core},
                                      {"kchacha", run_kchacha},
+                                     {"balloon-kchacha", run_balloon_kchacha},
                                      {0, 0}};
 
 static struct algo bytes2bytes[] = {{"chacha20", run_chacha20_crypt}, {0, 0}};

@@ -28,6 +28,7 @@ libslowlibs = static_library('slowlibs',
   'src/include_impl.c',
   'src/slowcrypt/sha3.c',
   'src/slowcrypt/chacha20.c',
+  'src/slowcrypt/balloon_kchacha.c',
   sha3_gen_rc,
   install: true,
   dependencies: [slowlibs_headeronly_dep])

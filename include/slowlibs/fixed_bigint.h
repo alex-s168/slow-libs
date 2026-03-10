@@ -94,7 +94,7 @@ typedef uint64_t slowlib_fbig_double_part;
 #define slowlib_fbig_nb(arr) \
   (sizeof(arr) / sizeof(slowlib_fbig_part) * slowlib_fbig_part_bits)
 
-// biggest is on the right
+// biggest is on the right (little endian)
 #define slowlib_fbig_as_bytes(arr) ((uint8_t*)(slowlib_fbig_part*)(arr))
 
 #define slowlib_fbig_static_assert(cond, msg)                          \
