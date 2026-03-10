@@ -27,7 +27,29 @@ typedef enum
   SLOWLIBS_IO_INTERNAL_ERROR,
   SLOWLIBS_IO_EXTERNAL_ERROR,
   SLOWLIBS_IO_TIMEOUT,
+  /* serializer / deserializer can't deal with returned WOULD_BLOCK or YIELD */
+  SLOWLIBS_IO_NOT_ASYNC,
 } slowlibs_io_status;
+
+static inline slowlibs_io_status slowlibs_not_async(slowlibs_io_status status)
+{
+  switch (status) {
+    case SLOWLIBS_IO_YIELD:
+    case SLOWLIBS_IO_WOULD_BLOCK:
+      return SLOWLIBS_IO_NOT_ASYNC;
+
+    default:
+      return status;
+  }
+}
+
+static inline slowlibs_io_status slowlibs_io_chain(slowlibs_io_status a,
+                                                   slowlibs_io_status b)
+{
+  if (a < 0)
+    return a;
+  return b;
+}
 
 typedef slowlibs_io_status slowlibs_write_fn(void* ctx,
                                              uint8_t const* data,
@@ -72,11 +94,29 @@ typedef struct
     }                     \
   } while (0)
 
-#define slowlibs_write(w, data, data_len) \
-  ((w).write((w).ctx, (data), (data_len)))
+static inline slowlibs_io_status slowlibs_write(slowlibs_writer writer,
+                                                void const* data,
+                                                size_t data_len)
+{
+  return writer.write(writer.ctx, data, data_len);
+}
 
-#define slowlibs_read(len_out, r, buf, read_max) \
-  ((r).read((len_out), (r).ctx, (buf), (read_max)))
+static inline slowlibs_io_status slowlibs_write_u8(slowlibs_writer writer,
+                                                   uint8_t v)
+{
+  return writer.write(writer.ctx, &v, 1);
+}
+
+#define slowlibs_write_v(writer, value) \
+  slowlibs_write((writer), &(value), sizeof((value)))
+
+static inline slowlibs_io_status slowlibs_read(size_t* len_out,
+                                               slowlibs_reader reader,
+                                               void* buf,
+                                               size_t read_max)
+{
+  return reader.read(len_out, reader.ctx, buf, read_max);
+}
 
 /* ========================= RW Impls =========================== */
 
