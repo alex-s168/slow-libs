@@ -1,4 +1,4 @@
-#define SLOWCRYPT_CHACHA20_IMPL
+
 #include "slowlibs/chacha20.h"
 
 static char key[] = {

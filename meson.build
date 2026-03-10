@@ -25,6 +25,7 @@ libslowlibs = static_library('slowlibs',
   'src/io.c',
   'src/include_impl.c',
   'src/slowcrypt/sha3.c',
+  'src/slowcrypt/chacha20.c',
   sha3_gen_rc,
   install: true,
   dependencies: [slowlibs_headeronly_dep])
@@ -49,11 +50,15 @@ executable('sgraph-adj',
 
 test('chacha20-block_test_vector', executable('chacha20-block_test_vector',
   './tests/chacha20/block_test_vector.c',
-  dependencies: [slowlibs_headeronly_dep]))
+  dependencies: [slowlibs_dep]))
 
 test('chacha20-keygen_test_vector', executable('chacha20-keygen_test_vector',
   './tests/chacha20/keygen_test_vector.c',
-  dependencies: [slowlibs_headeronly_dep]))
+  dependencies: [slowlibs_dep]))
+
+test('chacha20-h_test_vector', executable('chacha20-h_test_vector',
+  './tests/chacha20/hchacha20.c',
+  dependencies: [slowlibs_dep]))
   
 test('poly1305-test_vector_bitint', executable('poly1305-test_vector_bitint',
   './tests/poly1305/test_vector_bitint.c',

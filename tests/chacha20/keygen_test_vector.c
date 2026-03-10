@@ -2,7 +2,6 @@
 
 #include <stdint.h>
 
-#define SLOWCRYPT_CHACHA20_IMPL
 #include "slowlibs/chacha20.h"
 
 static uint8_t const KEY[32] = {
