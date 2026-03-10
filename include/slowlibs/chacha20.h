@@ -182,8 +182,23 @@ void slowcrypt_chacha20_run(slowcrypt_chacha20* state,
 void slowcrypt_kchacha(uint8_t out[32],
                        uint8_t const protocol_constant[16],
                        uint8_t const data[],
-                       int data_len,
+                       unsigned data_len,
                        int rounds);
+
+/**
+ *
+ * Returns:
+ * - 0 on success
+ */
+int slowcrypt_balloon_kchacha(uint8_t out[32],
+                              uint8_t const protocol_constant[16],
+                              uint8_t const password[],
+                              unsigned password_len,
+                              uint8_t const salt[],
+                              unsigned salt_len,
+                              unsigned buffer_size,
+                              unsigned balloon_rounds,
+                              unsigned kchacha_rounds);
 
 /*
  * Arguments:
