@@ -105,10 +105,11 @@ void slowcrypt_chacha20_run(slowcrypt_chacha20* state,
     state->state[i] += swap->state[i];
 }
 
-void slowcrypt_hchacha20(slowcrypt_chacha20* state,
-                         uint8_t const key[32],
-                         uint8_t const nonce[16],
-                         uint8_t hash[32])
+void slowcrypt_hchacha(slowcrypt_chacha20* state,
+                       uint8_t const key[32],
+                       uint8_t const nonce[16],
+                       uint8_t hash[32],
+                       int rounds)
 {
   int i;
 
@@ -123,7 +124,7 @@ void slowcrypt_hchacha20(slowcrypt_chacha20* state,
   for (i = 0; i < 4; i++)
     state->state[12 + i] = slowcrypt_chacha20_read_ul32(&nonce[i * 4]);
 
-  slowcrypt_chacha20_rounds(state, 20);
+  slowcrypt_chacha20_rounds(state, rounds);
 
   for (i = 0; i < 4; i++)
     slowcrypt_chacha20_write_ul32(&hash[i * 4], state->state[i]);
@@ -175,4 +176,62 @@ void slowcrypt_chacha20_poly1305_key_gen(uint8_t out[32],
 
   slowcrypt_chacha20_deinit(&state);
   slowcrypt_chacha20_deinit(&state2);
+}
+
+void slowcrypt_kchacha(uint8_t state[32],
+                       uint8_t const protocol_constant[16],
+                       uint8_t const data[],
+                       int data_len,
+                       int rounds)
+{
+  int i, chunk_len;
+  slowcrypt_chacha20 cstate;
+  uint8_t swap[32];
+  int add_trailing_block = 1;
+
+  state[0] = 0x4b;
+  state[1] = 0x43;
+  state[2] = 0x68;
+  state[3] = 0x61;
+  state[4] = 0x43;
+  state[5] = 0x68;
+  state[6] = 0x61;
+  state[7] = 0x31;
+  for (i = 8; i < 32; i++)
+    state[i] = 0;
+
+  for (; data_len >= 0; data_len -= 32, data += 32) {
+    chunk_len = data_len;
+    if (chunk_len > 32)
+      chunk_len = 32;
+
+    for (i = 0; i < chunk_len; i++)
+      swap[i] = data[i];
+    for (; i < 31; i++)
+      swap[i] = 0;
+
+    if (chunk_len != 32) {
+      add_trailing_block = 0;
+      swap[31] = 32 - chunk_len;
+    }
+
+    for (i = 0; i < 32; i++)
+      swap[i] ^= state[i];
+
+    slowcrypt_hchacha(&cstate, swap, protocol_constant, state, rounds);
+  }
+
+  if (add_trailing_block) {
+    for (; i < 31; i++)
+      swap[i] = state[i];
+    swap[31] = 32 ^ state[i];
+
+    slowcrypt_hchacha(&cstate, swap, protocol_constant, state, rounds);
+  }
+
+  slowcrypt_chacha20_deinit(&cstate);
+  for (i = 0; i < 32; i++)
+    ((volatile uint8_t*)swap)[i] = 0;
+  *(volatile int*)&chunk_len = 0;
+  *(volatile int*)&add_trailing_block = 0;
 }

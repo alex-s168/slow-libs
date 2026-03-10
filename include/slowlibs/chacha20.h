@@ -110,14 +110,18 @@ void slowcrypt_chacha20_block(slowcrypt_chacha20 state[2],
                               uint8_t data[64]);
 
 /*
- * Run HChaCha20, a (bad) fixed-input hash function (see /doc/cacha20.md)
+ * Run HChaCha, a (bad) fixed-input "hash" function (see /doc/cacha20.md)
  *
  * does NOT zeroize state! zeroize manually when done.
+ *
+ * Parameters:
+ * - rounds: 20 for HChaCha20
  */
-void slowcrypt_hchacha20(slowcrypt_chacha20* state,
-                         uint8_t const key[32],
-                         uint8_t const nonce[16],
-                         uint8_t hash[32]);
+void slowcrypt_hchacha(slowcrypt_chacha20* state,
+                       uint8_t const key[32],
+                       uint8_t const nonce[16],
+                       uint8_t hash[32],
+                       int rounds);
 
 /* call this to zero out memory */
 void slowcrypt_chacha20_deinit(slowcrypt_chacha20* state);
@@ -139,6 +143,47 @@ void slowcrypt_chacha20_rounds(slowcrypt_chacha20* state, int num_rounds);
 void slowcrypt_chacha20_run(slowcrypt_chacha20* state,
                             slowcrypt_chacha20* swap,
                             int num_rounds);
+
+/*
+ * Run KChaCha, a variable-input hash function (see /doc/cacha20.md)
+ *
+ * Parameters:
+ * - protocol_constant:
+ *     You should not reuse protocol constants across different parts of your app.
+ *     This is NOT allowed to be ZERO!
+ *
+ * - rounds:
+ *     Recommended: 20, 12, or 8
+ *
+ *
+ * Security: Only these applications are currently permitted!!
+ * - cryptographic hash function of per-protocol fixed-length high-entropy data:
+ *     This requires at least 12 rounds, however 20 are recomended.
+ *
+ *     Examples:
+ *     - Curve25519 key exchange
+ *
+ * - low-security applications, such as a hash-function primitive
+ *   inside a memory-dependent hash function, used for for example proof-of-work challenges.
+ *   This is only permitted if some high-entropy salt is added into the hash function,
+ *   optimally before the data.
+ *
+ *   Examples:
+ *   - use as hash function inside balloon-hash, for proof-of-work challenges
+ *   - use as hash function inside balloon-hash, combined with lots of high-entropy salt,
+ *     and high balloon-hash memory and iteration parameters,
+ *     for use in password key derive applications.
+ *     This requires at least 12 rounds, however 20 are recommended.
+ *
+ * - non-cryptographic hash function applications:
+ *   - Trusted file chcecksumming, with a lower round parameter.
+ *   - ...
+ */
+void slowcrypt_kchacha(uint8_t out[32],
+                       uint8_t const protocol_constant[16],
+                       uint8_t const data[],
+                       int data_len,
+                       int rounds);
 
 /*
  * Arguments:

@@ -4,7 +4,6 @@
 #include <string.h>
 #include <time.h>
 
-#define SLOWCRYPT_CHACHA20_IMPL
 #include "slowlibs/chacha20.h"
 
 #define SLOWCRYPT_POLY1305_IMPL
@@ -115,6 +114,38 @@ static unsigned long file_read_chunk(FILE* file,
   return n;
 }
 
+static void* file_read_all(FILE* file, unsigned long* lenout)
+{
+  void* all = 0;
+  void* allnew;
+  unsigned long all_len = 0;
+  void* buf = malloc(8 * 1024);
+  unsigned long clen;
+  if (!buf) {
+    fprintf(stderr, "malloc fail (8KiB)\n");
+    exit(1);
+  }
+
+  while (!feof(file)) {
+    clen = file_read_chunk(file, buf, 8 * 1024);
+    if (!clen) break;
+    allnew = realloc(all, all_len + clen);
+    if (!allnew) {
+      free(all);
+      fprintf(stderr, "malloc fail (%lu B)\n", all_len + clen);
+      exit(1);
+    }
+    all = allnew;
+    memcpy(all + all_len, buf, clen);
+    all_len += clen;
+  }
+
+  free(buf);
+
+  *lenout = all_len;
+  return all;
+}
+
 static void parse_rng_args(unsigned long* oLimit,
                            char** oSeed,
                            char const* rngName,
@@ -144,6 +175,57 @@ static void parse_rng_args(unsigned long* oLimit,
       exit(1);
     }
   }
+}
+
+static void run_kchacha(char** args)
+{
+  static char const help[] =
+      "kchacha [--rounds N] <protocol-constant>\n"
+      "\n"
+      "Run the KChaCha hash function\n"
+      "\n"
+      "Defaults to 20 rounds\n"
+      "\n"
+      "Protocol constant is a hex value, that should be unique to each "
+      "aplication,\n"
+      " and NEVER be zero!\n";
+  uint8_t hash[32], protocol_constant[16];
+  char const* protocol_constant_hex;
+  int nrounds = 20;
+  int npos = 0;
+  int i;
+  uint8_t* input;
+  unsigned long len;
+
+  for (; *args; args++) {
+    if (anyeq(*args, "-h", "-help", "--help")) {
+      printf("%s", help);
+      exit(0);
+    } else if (anyeq(*args, "-r", "-rounds", "--rounds") && args[1]) {
+      args++;
+      nrounds = atoi(*args);
+    } else if (npos == 0 && ++npos) {
+      protocol_constant_hex = *args;
+    } else {
+      fprintf(stderr, "Unexpected argument: %s\n", *args);
+      exit(1);
+    }
+  }
+
+  if (npos < 1) {
+    fprintf(stderr, "Missing arguments!\n");
+    exit(1);
+  }
+
+  parse_hex2buf(protocol_constant, 16, "protocol-constant",
+                protocol_constant_hex);
+
+  input = file_read_all(stdin, &len);
+  slowcrypt_kchacha(hash, protocol_constant, input, len, nrounds);
+
+  for (i = 0; i < 32; i++)
+    printf("%02x", hash[i]);
+  printf("\n");
 }
 
 static void run_chacha20_core(char** args)
@@ -505,7 +587,7 @@ static void run_prng(char** args)
   unsigned long limit, nb, nwrb, seedlen;
   char* seed;
   char const description[] =
-      "Run a weak implementationd-dependent (non cryptographically secure) "
+      "Run a weak implementation-dependent (non cryptographically secure) "
       "PRNG\n";
   uint16_t acc;
   uint16_t buf[32];
@@ -584,6 +666,7 @@ static void run_entropy(char** args)
 
 static struct algo bytes2scalar[] = {{"poly1305", run_poly1305},
                                      {"chacha20-core", run_chacha20_core},
+                                     {"kchacha", run_kchacha},
                                      {0, 0}};
 
 static struct algo bytes2bytes[] = {{"chacha20", run_chacha20_crypt}, {0, 0}};

@@ -38,7 +38,7 @@ meson.override_dependency('slowlibs', slowlibs_dep)
 
 executable('slowcrypt',
   './src/slowcrypt/cli-slowcrypt.c',
-  dependencies: [slowlibs_headeronly_dep],
+  dependencies: [slowlibs_dep],
   install: true)
 
 executable('sgraph-adj',
