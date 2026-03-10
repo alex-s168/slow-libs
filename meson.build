@@ -10,6 +10,7 @@ install_headers(
   './include/slowlibs/slowarr.h',
   './include/slowlibs/slowgraph.h',
   './include/slowlibs/systemrand.h',
+  './include/slowlibs/cbor.h',
   subdir: 'slowlibs')
 
 slowlibs_headeronly_dep = declare_dependency(
@@ -23,6 +24,7 @@ sha3_gen_rc = custom_target('sha3_gen_rc',
 
 libslowlibs = static_library('slowlibs',
   'src/io.c',
+  'src/util.c',
   'src/include_impl.c',
   'src/slowcrypt/sha3.c',
   'src/slowcrypt/chacha20.c',
@@ -83,3 +85,7 @@ test('slowarr-std.1', executable('slowarr-std.1',
 test('slowarr-std.1-cxx', executable('slowarr-std.1-cxx',
   './tests/slowarr/std1.cxx',
   dependencies: [slowlibs_headeronly_dep]))
+
+test('utils-test', executable('utils-test',
+  './tests/util/memrevcpy.c',
+  dependencies: [slowlibs_dep]))
