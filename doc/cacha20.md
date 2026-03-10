@@ -46,6 +46,25 @@ fn hchacha20(key: &[u8;32], nonce: &[u8;16]) -> [u8;32] {
 }
 ```
 
+### Properties
+The ChaCha N-round-function is a invertible 512bit -> 512bit permutation, with, according to DJB, "better diffusion than Salsa".
+
+Invertible functions that map domain `X -> X` are always collission-free.
+
+This means, that the N-round-function is a diffusing/hashing collision-free pseudo-random permutation function.
+
+Base ChaCha20 adds the result of the N-round-function to the initial state, to make it effictively irreversible.
+
+However, HChaCha20 takes a different approach: It only returns the bottom half of the state (while the input bytes are the top half, which shouldn't matter if the diffusion was perfect),
+making the function irreversible, which is obvious, because if you only know half the information returned from `a+1`, you will have many possible values for `a`.
+
+#### Collision resistance
+Because of the birthday paradox, we have optimally `sqrt(2^256)` collision resistance (32B input -> expand to 64B state -> mix -> compress to 32B output),
+which is `2^128` collission resistance.
+
+This assumes 20-round ChaCha has a perfect diffusion.
+
+
 ### Test Vector
 Key:
 ```
@@ -69,7 +88,11 @@ Expected output:
 ## KChaCha20
 Variable-length input hash function based on HChaCha20.
 
-Algorithm:
+### DISCLAIMER
+This function is not tested or verified yet!
+DO NOT use this in sensitive applications yet!
+
+### Algorithm
 - A protocol constant is passed as parameter.
   Even though this allows up to 16 bytes,
   just using one of those bytes should be good enough.
@@ -91,6 +114,12 @@ Algorithm:
   - let the new state be `hchacha20(key: state, nonce: protocol_constant)`
 - The result is the output state
 
+
+### Credits
+Based on Loup Vaillant's ChaCha20 ECDH key derivation design: https://loup-vaillant.fr/articles/chacha20-key-derivation
+
+
+### Pseudocode
 Do not use the following code in production:
 ```rs
 fn kchacha20_block(state: &mut [u8; 32], constant: &[u8;16], mut data: [u8;32]) {
@@ -141,7 +170,51 @@ fn kchacha20(constant: &[u8;16], data: &[u8]) -> [u8;32] {
 }
 ```
 
-Based on Loup Vaillant's ChaCha20 ECDH key derivation design: https://loup-vaillant.fr/articles/chacha20-key-derivation
+
+### Test vector
+The data is the following ASCII string (without null-terminator):
+```
+DoNotCurrently-Use-KChaCha-InSensitive-Applications!!NeedingMoreBytes-for-getting-to-three-blocks.
+```
+
+With the protocol constant:
+```
+0x01, 0x02, 0x03, 0x04, 0x05, 0x06,
+0x07, 0x08, 0x09, 0x0a, 0x0b, 0x0c,
+0x0d, 0x0e, 0x0f, 0xfa
+```
+
+Running 20-round KChaCha, should produce:
+```
+  0x09, 0xff, 0x91, 0x83, 0x19, 0xfa, 0x21, 0xfd, 0x2d, 0x49, 0x13,
+  0xf2, 0x7e, 0x00, 0x3e, 0x63, 0x96, 0xf5, 0x69, 0xc4, 0xfc, 0x94,
+  0x53, 0xff, 0x31, 0x43, 0x9b, 0x6c, 0xc1, 0x45, 0x22, 0x79,
+```
+
+
+### Properties
+To help analyze `KChaCha`, we'll analyze the inner code after the padding has been applied, and we'll also simplify the initialization vector:
+```rs
+fn inner(blocks: &[[u8;32]]) -> [u8;32] {
+  let mut state = [0_u8; 32];
+  state[..7] = medium_entropy_constant;
+
+  for mut block in blocks {
+    state = hchacha20(key:   block ^ state,
+                      nonce: low_entropy_constant);
+  }
+
+  state
+}
+```
+
+The padding adds the following constraints into our inner function:
+- After padding, input is always at least 1 block.
+- At least the last block of the input contains non-zero data.
+
+
+TODO: send help
+
 
 ## References
 - https://loup-vaillant.fr/tutorials/chacha20-design

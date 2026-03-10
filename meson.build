@@ -59,6 +59,10 @@ test('chacha20-keygen_test_vector', executable('chacha20-keygen_test_vector',
 test('chacha20-h_test_vector', executable('chacha20-h_test_vector',
   './tests/chacha20/hchacha20.c',
   dependencies: [slowlibs_dep]))
+
+test('chacha20-k_test_vector', executable('chacha20-k_test_vector',
+  './tests/chacha20/kchacha.c',
+  dependencies: [slowlibs_dep]))
   
 test('poly1305-test_vector_bitint', executable('poly1305-test_vector_bitint',
   './tests/poly1305/test_vector_bitint.c',

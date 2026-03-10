@@ -128,7 +128,8 @@ static void* file_read_all(FILE* file, unsigned long* lenout)
 
   while (!feof(file)) {
     clen = file_read_chunk(file, buf, 8 * 1024);
-    if (!clen) break;
+    if (!clen)
+      break;
     allnew = realloc(all, all_len + clen);
     if (!allnew) {
       free(all);
