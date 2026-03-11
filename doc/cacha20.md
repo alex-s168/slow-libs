@@ -26,7 +26,7 @@ fn hchacha20(key: &[u8;32], nonce: &[u8;16]) -> [u8;32] {
   }
 
   for i in 0..10 {
-    // run the 8 quarter rounds
+    // run the 8 quarter rounds (one column row and one diagonal row)
     // ( see "inner_block" according to https://datatracker.ietf.org/doc/html/rfc7539#section-2.3.1 )
     inner_block(&mut state);
   }
@@ -114,6 +114,11 @@ DO NOT use this in sensitive applications yet!
   - let the new state be `hchacha20(key: state, nonce: protocol_constant)`
 - The result is the output state
 
+### Altrnative Variants
+- 12 (instead of 20) round version: 6 column + 6 diagonal rounds: This should still be secure enough for most applications
+- 8 (instead of 20) round version: 4 column + 4 diagonal rounds:
+  probably still secure enough for most applications, but only recommended for less-secure applications
+  (ex: use as hash function inside balloon-hash, for proof-of-work)
 
 ### Credits
 Based on Loup Vaillant's ChaCha20 ECDH key derivation design: https://loup-vaillant.fr/articles/chacha20-key-derivation
