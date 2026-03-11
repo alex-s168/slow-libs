@@ -85,7 +85,7 @@ Expected output:
 ```
 
 
-## KChaCha20
+## KChaCha20 (version 1.0-alpha.1)
 Variable-length input hash function based on HChaCha20.
 
 ### DISCLAIMER
@@ -137,7 +137,7 @@ fn kchacha20_block(state: &mut [u8; 32], constant: &[u8;16], mut data: [u8;32]) 
 
 fn kchacha20(constant: &[u8;16], data: &[u8]) -> [u8;32] {
   let mut state = [0_u8; 32];
-  state[0] = 0x4b;
+  state[0] = 0x4b; /* <-- IV will probably be removed in a futue version */
   state[1] = 0x43;
   state[2] = 0x68;
   state[3] = 0x61;
