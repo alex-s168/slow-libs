@@ -84,8 +84,29 @@ Expected output:
   0xAD, 0xA7, 0xC7, 0xE3, 0x56, 0xC3, 0x58, 0xEC, 0x89, 0x85, 0xC0, 0xEA, 0x33, 0xBD, 0xC2, 0x38, 0x43, 0xE1, 0xE4, 0xAF, 0x79, 0xF1, 0x21, 0x62, 0xC4, 0xBD, 0xC5, 0x43, 0xF5, 0x51, 0xEF, 0x10,
 ```
 
+## UnpaddedKChaCha
+Variable-length input hash function based on HChaCha20.
 
-## KChaCha20 (version 1.0-alpha.1)
+### DISCLAIMER
+You should only use this in applications where you are sure you don't need padding!
+
+### Algorithm
+- A protocol constant is passed as parameter.
+  Even though this allows up to 16 bytes,
+  just using one of those bytes should be good enough.
+  However, it is never allowed to be zero,
+  and you should use different values for different applications (domain seperation)
+- Input data is padded to a multipled of 32 bytes, by right-padding with zeros
+- Initialize a state of 32 bytes with zeros
+- For each chunk of 32 bytes in the input message:
+  - XOR the 32-byte state with the 32-byte chunk
+  - let the new state be `hchacha20(key: state, nonce: protocol_constant)`
+- The result is the output state
+
+
+
+
+## KChaCha (version 1.0-alpha.2)
 Variable-length input hash function based on HChaCha20.
 
 ### DISCLAIMER
