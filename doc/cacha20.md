@@ -257,7 +257,7 @@ fn balloon(
 
     // Step 2: Mix buffer contents
     for t in 0..balloon_rounds {
-        for m in 0..buffer_size {
+        for m in 0..space_nchunk {
             // Step 2a: hash last and current blocks
             buf[m] = kchacha(constant, u32::to_le_bytes(i++) ||
                                        buf[(m - 1) % space_nchunk] ||
