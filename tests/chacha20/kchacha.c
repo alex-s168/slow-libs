@@ -1,5 +1,4 @@
 
-#include <stdio.h>
 #include "slowlibs/chacha20.h"
 
 static char const data[] =

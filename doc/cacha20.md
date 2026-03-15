@@ -81,7 +81,9 @@ Nonce:
 
 Expected output:
 ```
-  0xAD, 0xA7, 0xC7, 0xE3, 0x56, 0xC3, 0x58, 0xEC, 0x89, 0x85, 0xC0, 0xEA, 0x33, 0xBD, 0xC2, 0x38, 0x43, 0xE1, 0xE4, 0xAF, 0x79, 0xF1, 0x21, 0x62, 0xC4, 0xBD, 0xC5, 0x43, 0xF5, 0x51, 0xEF, 0x10,
+  0xAD, 0xA7, 0xC7, 0xE3, 0x56, 0xC3, 0x58, 0xEC, 0x89, 0x85, 0xC0,
+  0xEA, 0x33, 0xBD, 0xC2, 0x38, 0x43, 0xE1, 0xE4, 0xAF, 0x79, 0xF1,
+  0x21, 0x62, 0xC4, 0xBD, 0xC5, 0x43, 0xF5, 0x51, 0xEF, 0x10,
 ```
 
 ## UnpaddedKChaCha
@@ -131,9 +133,10 @@ DO NOT use this in sensitive applications yet!
   - let the new state be `hchacha20(key: state, nonce: protocol_constant)`
 - The result is the output state
 
-### Altrnative Variants
-- 12 (instead of 20) round version: 6 column + 6 diagonal rounds: This should still be secure enough for most applications
-- 8 (instead of 20) round version: 4 column + 4 diagonal rounds:
+### Variants
+- 20 round version: 10 column + 10 diagonal rounds: The default.
+- 12 round version: 6 column + 6 diagonal rounds: This should still be secure enough for most applications
+- 8 round version: 4 column + 4 diagonal rounds:
   probably still secure enough for most applications, but only recommended for less-secure applications
   (ex: use as hash function inside balloon-hash, for proof-of-work)
 
@@ -192,9 +195,9 @@ DoNotCurrently-Use-KChaCha-InSensitive-Applications!!NeedingMoreBytes-for-gettin
 
 With the protocol constant:
 ```
-0x01, 0x02, 0x03, 0x04, 0x05, 0x06,
-0x07, 0x08, 0x09, 0x0a, 0x0b, 0x0c,
-0x0d, 0x0e, 0x0f, 0xfa
+  0x01, 0x02, 0x03, 0x04, 0x05, 0x06,
+  0x07, 0x08, 0x09, 0x0a, 0x0b, 0x0c,
+  0x0d, 0x0e, 0x0f, 0xfa
 ```
 
 Running 20-round KChaCha, should produce:
@@ -227,6 +230,99 @@ The padding adds the following constraints into our inner function:
 
 
 TODO: send help
+
+
+## KChaCha-Balloon
+slowlib's interpretation of Balloon-Hash using KChaCha as core hash function
+
+### Algorithm
+```rs
+fn balloon(
+    constant: [u8; 16],
+    password: &[u8],
+    salt: &[u8],
+    space_nb: usize,
+    balloon_rounds: usize
+) -> [u8; 32] {
+    let space_nchunk = space_nb / 32;
+
+    let mut buf = vec![[0_u8; 32]; space_nchunk];
+    let mut i = 0_u32;
+
+    // Step 1: Expand input into buffer
+    buf[0] = kchacha(constant, u32::to_le_bytes(i++) || password || salt);
+    for m in 1..space_nchunk {
+        buf[m] = kchacha(constant, u32::to_le_bytes(i++) || buf[m-1]);
+    }
+
+    // Step 2: Mix buffer contents
+    for t in 0..balloon_rounds {
+        for m in 0..buffer_size {
+            // Step 2a: hash last and current blocks
+            buf[m] = kchacha(constant, u32::to_le_bytes(i++) ||
+                                       buf[(m - 1) % space_nchunk] ||
+                                       buf[m]);
+
+            // Step 2b: Hash-in pseudo-random chosen blocks
+            for i in 0..3 {
+                let yab = kchacha(constant, u32::to_le_bytes(i++) ||
+                                            salt ||
+                                            u32::to_le_bytes(t) ||
+                                            u32::to_le_bytes(m) ||
+                                            u32::to_le_bytes(i));
+                let random_buf_id = u32::from_le_bytes(yab) % space_nchunk;
+
+                buf[m] = kchacha(constant, u32::to_le_bytes(i++) ||
+                                           buf[m] ||
+                                           buf[random_buf_id]);
+            }
+        }
+    }
+
+    // Step 3: gather outputs
+    buf[space_nchunk - 1]
+}
+```
+
+
+### Variants
+- KChaCha20-Balloon: Definitely secure enough for all applications
+- KChaCha12-Balloon: Secure enough for most applications
+- KChaCha8-Balloon: Probably secure enough for most applications
+- UnpaddedKChaCha12-Balloon: Simpler than the standard variants. Should only be used for Proof-of-work.
+- UnpaddedKChaCha8-Balloon: Simpler than the standard variants. Should only be used for Proof-of-work.
+
+
+### Test vector
+Hashing this password as ASCII (without null-terminator):
+```
+SeriousPassword
+```
+
+With the following protocol constant:
+```
+  0x01, 0x02, 0x03, 0x04, 0x05, 0x06,
+  0x07, 0x08, 0x09, 0x0a, 0x0b, 0x0c,
+  0x0d, 0x0e, 0x0f, 0xfa
+```
+
+And the following salt:
+```
+  0xda, 0x0e, 0xb9, 0xe9, 0x8b, 0x48, 0x2a, 0x18,
+  0x2f, 0xe3, 0xdf, 0xd3, 0x74, 0x39, 0xa9, 0xdd,
+```
+
+With the following parameters:
+- Variant: KChaCha8-Balloon
+- Space: 4MiB (`4 * 1024 * 1024` bytes)
+- Balloon rounds: 1
+
+Should produce:
+```
+  0x34, 0xdf, 0x57, 0xcd, 0xdc, 0x2e, 0x5f, 0x14, 0x7e, 0xe7, 0xd1,
+  0x86, 0xaf, 0x78, 0x8a, 0xe9, 0x9d, 0x98, 0xee, 0x1e, 0x24, 0xc4,
+  0xb4, 0x45, 0xc4, 0xb7, 0xc7, 0x35, 0xe0, 0xa3, 0x14, 0xaf
+```
 
 
 ## References
