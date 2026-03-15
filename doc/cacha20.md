@@ -104,11 +104,7 @@ DO NOT use this in sensitive applications yet!
     - if the input data is 31 bytes, a `0x01` is added.
     - if the input data is 30 bytes, `0x00` and `0x02` is added.
     - if the input data is 32 bytes, a new block of zeros, with `0x32` as last byte, is added
-- Initialize a state of 32 bytes with:
-  - the following 8 magic bytes:
-    - `'0x4b', '0x43', '0x68', '0x61'`
-    - `'0x43', '0x68', '0x61', '0x31'`
-  - 24 zero bytes
+- Initialize a state of 32 bytes with zeros
 - For each chunk of 32 bytes in the input message:
   - XOR the 32-byte state with the 32-byte chunk
   - let the new state be `hchacha20(key: state, nonce: protocol_constant)`
@@ -137,15 +133,6 @@ fn kchacha20_block(state: &mut [u8; 32], constant: &[u8;16], mut data: [u8;32]) 
 
 fn kchacha20(constant: &[u8;16], data: &[u8]) -> [u8;32] {
   let mut state = [0_u8; 32];
-  state[0] = 0x4b; /* <-- IV will probably be removed in a futue version */
-  state[1] = 0x43;
-  state[2] = 0x68;
-  state[3] = 0x61;
-  state[4] = 0x43;
-  state[5] = 0x68;
-  state[6] = 0x61;
-  state[7] = 0x31;
-
   let mut add_trailing_block = true;
 
   for chunk_i in 0..data.len().div_ceil(32) {
@@ -191,9 +178,9 @@ With the protocol constant:
 
 Running 20-round KChaCha, should produce:
 ```
-  0x09, 0xff, 0x91, 0x83, 0x19, 0xfa, 0x21, 0xfd, 0x2d, 0x49, 0x13,
-  0xf2, 0x7e, 0x00, 0x3e, 0x63, 0x96, 0xf5, 0x69, 0xc4, 0xfc, 0x94,
-  0x53, 0xff, 0x31, 0x43, 0x9b, 0x6c, 0xc1, 0x45, 0x22, 0x79,
+  0xda, 0x0e, 0xb9, 0xe9, 0x8b, 0x48, 0x2a, 0x18, 0x2f, 0xe3, 0xdf,
+  0xd3, 0x74, 0x39, 0xa9, 0xdd, 0xc4, 0xb9, 0xad, 0xbe, 0x3f, 0xab,
+  0xf8, 0x17, 0xea, 0xd2, 0x25, 0x0f, 0x6c, 0xa1, 0x60, 0x99,
 ```
 
 
