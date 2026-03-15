@@ -260,7 +260,7 @@ fn balloon(
         for m in 0..space_nchunk {
             // Step 2a: hash last and current blocks
             buf[m] = kchacha(constant, u32::to_le_bytes(i++) ||
-                                       buf[(m - 1) % space_nchunk] ||
+                                       buf[if m == 0 { space_nchunk - 1 } else { m - 1 }] ||
                                        buf[m]);
 
             // Step 2b: Hash-in pseudo-random chosen blocks
@@ -270,7 +270,7 @@ fn balloon(
                                             u32::to_le_bytes(t) ||
                                             u32::to_le_bytes(m) ||
                                             u32::to_le_bytes(i));
-                let random_buf_id = u32::from_le_bytes(yab) % space_nchunk;
+                let random_buf_id = u32::from_le_bytes(yab[0..4]) % space_nchunk;
 
                 buf[m] = kchacha(constant, u32::to_le_bytes(i++) ||
                                            buf[m] ||
